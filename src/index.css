@@ -1,0 +1,336 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&display=swap');
+
+:root {
+  --color-bg: #0a0e27;
+  --color-surface: rgba(26, 26, 46, 0.6);
+  --color-surface-hover: rgba(26, 26, 46, 0.8);
+  --color-primary: rgb(120, 200, 240);
+  --color-primary-hover: rgb(180, 230, 250);
+  --color-accent: #d4a853;
+  --color-accent-hover: #e4bc6a;
+  --color-text: #e0e0e0;
+  --color-text-muted: #b8b8d0;
+  --color-border: rgba(255, 255, 255, 0.12);
+  --color-border-hover: rgba(255, 255, 255, 0.25);
+  --color-success: #64dcb4;
+  --color-success-bg: rgba(100, 220, 180, 0.12);
+  --color-error: #ff1661;
+  --color-error-bg: rgba(255, 22, 97, 0.12);
+  --font-heading: 'Cormorant Garamond', Georgia, serif;
+  --font-body: 'Cormorant Garamond', Georgia, serif;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.3);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  width: 100%;
+  font-family: var(--font-body);
+  font-size: 18px;
+  line-height: 1.7;
+  color: var(--color-text);
+  background: var(--color-bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-heading);
+}
+
+a {
+  color: var(--color-primary-hover);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+a:hover {
+  color: var(--color-accent);
+  text-decoration: underline;
+}
+
+button {
+  padding: 14px 36px;
+  font-size: 17px;
+  font-weight: 500;
+  letter-spacing: 1px;
+  background: var(--color-primary);
+  color: var(--color-bg);
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+  font-family: inherit;
+}
+
+button:hover {
+  background: var(--color-primary-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(120, 200, 240, 0.25);
+}
+
+button:active {
+  transform: translateY(0);
+}
+
+button:disabled {
+  background: #333;
+  color: #777;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+input, textarea, select {
+  font-family: inherit;
+  font-size: 16px;
+  padding: 12px 16px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  width: 100%;
+  backdrop-filter: blur(4px);
+}
+
+/* Inline form elements opt out of block-style defaults */
+input.inline-field,
+select.inline-field {
+  width: auto;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  backdrop-filter: none;
+  box-shadow: none;
+}
+
+input.inline-field:focus,
+select.inline-field:focus {
+  box-shadow: none;
+}
+
+input:focus, textarea:focus, select:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(120, 200, 240, 0.15);
+}
+
+input::placeholder, textarea::placeholder {
+  color: rgba(224, 224, 224, 0.35);
+}
+
+textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+/* Page transition wrapper */
+.page-enter {
+  animation: fadeSlideIn 0.4s ease both;
+}
+
+@keyframes fadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Shared card style */
+.card {
+  background: var(--color-surface);
+  padding: 32px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-card);
+  backdrop-filter: blur(8px);
+}
+
+@media (max-width: 600px) {
+  .card {
+    padding: 20px;
+  }
+}
+
+/* Toast */
+.toast-container {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.toast {
+  padding: 14px 28px;
+  border-radius: var(--radius-sm);
+  font-size: 15px;
+  font-weight: 500;
+  pointer-events: auto;
+  animation: toastIn 0.3s ease, toastOut 0.3s ease 2.7s;
+  animation-fill-mode: both;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.toast--success {
+  background: rgba(100, 220, 180, 0.2);
+  border: 1px solid rgba(100, 220, 180, 0.4);
+  color: var(--color-success);
+}
+
+.toast--error {
+  background: rgba(255, 22, 97, 0.2);
+  border: 1px solid rgba(255, 22, 97, 0.4);
+  color: var(--color-error);
+}
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes toastOut {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(16px); }
+}
+
+/* Icons */
+.icon {
+  stroke: var(--color-text-muted);
+  display: inline-block;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+/* Separator */
+.separator {
+  width: 60px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--color-accent), transparent);
+  margin: 0 auto;
+}
+
+/* ======================== */
+/* DateTimePicker            */
+/* ======================== */
+.dtp {
+  display: flex;
+  gap: 10px;
+  align-items: stretch;
+}
+
+.dtp__days {
+  display: flex;
+  gap: 6px;
+  flex: 1;
+}
+
+.dtp__day {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 4px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: rgba(26, 26, 46, 0.4);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: auto;
+  min-width: 0;
+}
+
+.dtp__day:hover {
+  border-color: var(--color-border-hover);
+  background: rgba(26, 26, 46, 0.7);
+  transform: none;
+  box-shadow: none;
+}
+
+.dtp__day--selected {
+  border-color: var(--color-primary);
+  background: rgba(120, 200, 240, 0.1);
+  box-shadow: 0 0 0 1px var(--color-primary);
+}
+
+.dtp__day--selected:hover {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 1px var(--color-primary);
+}
+
+.dtp__day-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--color-text-muted);
+  line-height: 1;
+}
+
+.dtp__day--selected .dtp__day-label {
+  color: var(--color-primary-hover);
+}
+
+.dtp__day-num {
+  font-family: var(--font-heading);
+  font-size: 1.3rem;
+  font-weight: 400;
+  color: var(--color-text);
+  line-height: 1;
+}
+
+.dtp__day--selected .dtp__day-num {
+  color: var(--color-primary-hover);
+}
+
+.dtp__time,
+.dtp__time-input {
+  width: 90px;
+  flex-shrink: 0;
+  text-align: center;
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  padding: 8px 10px;
+}
+
+/* Hide the native clock icon so it fits in the same width as the dropdown */
+.dtp__time-input::-webkit-calendar-picker-indicator {
+  display: none;
+}
+
+.dtp__time-input::-webkit-datetime-edit {
+  padding: 0;
+}
+
+/* Firefox: hide inner spin/clear buttons */
+.dtp__time-input::-moz-focus-inner {
+  padding: 0;
+  border: 0;
+}
+
+@media (max-width: 500px) {
+  .dtp {
+    flex-direction: column;
+  }
+
+  .dtp__time,
+  .dtp__time-input {
+    width: 100%;
+    padding: 12px 16px;
+  }
+}

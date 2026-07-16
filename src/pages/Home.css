@@ -1,0 +1,299 @@
+.home {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  position: relative;
+}
+
+/* Animated background gradient */
+.home::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 20% 50%, rgba(120, 200, 240, 0.06) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 20%, rgba(212, 168, 83, 0.05) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 80%, rgba(120, 200, 240, 0.04) 0%, transparent 60%);
+  animation: bgShift 12s ease-in-out infinite alternate;
+  pointer-events: none;
+  z-index: -1;
+}
+
+@keyframes bgShift {
+  0% { opacity: 0.6; transform: scale(1); }
+  100% { opacity: 1; transform: scale(1.05); }
+}
+
+.home__container {
+  max-width: 620px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+  z-index: 1;
+}
+
+/* Date block */
+.home__date {
+  font-family: var(--font-heading);
+  font-size: clamp(1rem, 2.5vw, 1.2rem);
+  letter-spacing: 6px;
+  text-transform: uppercase;
+  color: var(--color-accent);
+  font-weight: 400;
+}
+
+.home__title {
+  font-family: var(--font-heading);
+  font-size: clamp(2.8rem, 8vw, 4.5rem);
+  font-weight: 300;
+  letter-spacing: 6px;
+  color: var(--color-text);
+  text-align: center;
+  line-height: 1.1;
+}
+
+.home__subtitle {
+  font-size: 17px;
+  color: var(--color-text-muted);
+  text-align: center;
+  max-width: 380px;
+  line-height: 1.6;
+  margin-top: 4px;
+}
+
+.home__separator {
+  margin: 16px 0;
+}
+
+/* ===================== */
+/* Prose form (inline)   */
+/* ===================== */
+.home__prose-card {
+  width: 100%;
+  margin-top: 8px;
+}
+
+.home__prose {
+  font-family: var(--font-heading);
+  font-size: clamp(17px, 2.5vw, 20px);
+  line-height: 2.2;
+  color: rgb(180, 230, 250);
+}
+
+/* Inline inputs — all sizing handled via .inline-field global reset */
+.home__inline-input {
+  border-bottom: 1.5px solid rgba(180, 230, 250, 0.35);
+  font-family: var(--font-heading);
+  font-size: inherit;
+  line-height: inherit;
+  padding: 2px 4px;
+  color: rgb(180, 230, 250);
+  transition: border-color 0.3s ease;
+  vertical-align: baseline;
+}
+
+.home__inline-input::placeholder {
+  color: rgba(180, 230, 250, 0.4);
+  font-style: italic;
+}
+
+.home__inline-input:focus {
+  border-bottom-color: rgba(180, 230, 250, 0.7);
+}
+
+/* Inline selects */
+.home__inline-select {
+  border-bottom: 1.5px solid rgba(180, 230, 250, 0.35);
+  font-family: var(--font-heading);
+  font-size: inherit;
+  line-height: inherit;
+  padding: 2px 2px;
+  color: rgb(180, 230, 250);
+  cursor: pointer;
+  transition: border-color 0.3s ease;
+  appearance: none;
+  -webkit-appearance: none;
+  vertical-align: baseline;
+}
+
+.home__select-wrap {
+  position: relative;
+  display: inline;
+}
+
+.home__select-wrap::after {
+  content: '▾';
+  font-size: 0.7em;
+  opacity: 0.5;
+  margin-left: 2px;
+  pointer-events: none;
+}
+
+.home__inline-select:focus {
+  border-bottom-color: rgba(180, 230, 250, 0.7);
+}
+
+.home__inline-select option {
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: 16px;
+}
+
+.home__phone-group {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+/* Submit button — pill style from the original */
+.home__submit {
+  display: block;
+  margin-top: 28px;
+  padding: 16px 45px;
+  font-size: 17px;
+  font-weight: 400;
+  letter-spacing: 2px;
+  background: linear-gradient(135deg, rgb(120, 200, 240), rgb(180, 230, 250));
+  color: var(--color-bg);
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 8px 20px rgba(120, 200, 240, 0.2);
+  position: relative;
+  overflow: hidden;
+  width: auto;
+}
+
+.home__submit::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.5s ease;
+}
+
+.home__submit:hover::before {
+  left: 100%;
+}
+
+.home__submit:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 30px rgba(120, 200, 240, 0.35);
+  background: linear-gradient(135deg, rgb(180, 230, 250), rgb(200, 210, 255));
+}
+
+.home__submit:disabled {
+  background: #444;
+  color: #888;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* ===================== */
+/* Success state         */
+/* ===================== */
+.home__success {
+  width: 100%;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  animation: fadeSlideIn 0.5s ease both;
+}
+
+.home__success-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: rgba(100, 220, 180, 0.12);
+  border: 2px solid rgba(100, 220, 180, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.home__success-icon .icon {
+  stroke: var(--color-success);
+}
+
+.home__success-title {
+  font-family: var(--font-heading);
+  font-size: 1.8rem;
+  color: var(--color-success);
+  font-weight: 400;
+}
+
+.home__success-text {
+  color: var(--color-text-muted);
+  font-size: 16px;
+}
+
+.home__success-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 8px;
+}
+
+/* Error message */
+.home__message {
+  margin-top: 16px;
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid;
+  text-align: center;
+  font-size: 15px;
+  animation: fadeSlideIn 0.3s ease both;
+}
+
+.home__message--error {
+  background: var(--color-error-bg);
+  border-color: rgba(255, 22, 97, 0.4);
+  color: var(--color-error);
+}
+
+/* Nav to carnet */
+.home__nav-link {
+  background: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-primary-hover);
+  padding: 10px 24px;
+  font-size: 15px;
+  letter-spacing: 1px;
+  border-radius: 50px;
+}
+
+.home__nav-link:hover {
+  border-color: var(--color-border-hover);
+  background: rgba(255, 255, 255, 0.03);
+  box-shadow: none;
+  transform: none;
+}
+
+@media (max-width: 500px) {
+  .home {
+    padding: 24px 16px;
+  }
+
+  .home__prose {
+    font-size: 17px;
+  }
+
+  .home__submit {
+    width: 100%;
+    padding: 16px 30px;
+  }
+}
