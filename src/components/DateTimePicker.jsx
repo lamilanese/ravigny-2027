@@ -29,21 +29,9 @@ export default function DateTimePicker({ value, onChange, name, variant = 'arriv
   const days = variant === 'departure' ? DEPARTURE_DAYS : ARRIVAL_DAYS
 
   function emit(newDate, newTime) {
-    if (newDate && newTime) {
-      onChange({ target: { name, value: `${newDate}T${newTime}`, type: 'text' } })
-    } else if (newDate) {
-      const t = newTime || time
-      if (t) {
-        onChange({ target: { name, value: `${newDate}T${t}`, type: 'text' } })
-      } else {
-        onChange({ target: { name, value: `${newDate}T12:00`, type: 'text' } })
-      }
-    } else if (newTime) {
-      const d = newDate || date
-      if (d) {
-        onChange({ target: { name, value: `${d}T${newTime}`, type: 'text' } })
-      }
-    }
+    const d = newDate || date || days[0].date
+    const t = newTime || time || '12:00'
+    onChange({ target: { name, value: `${d}T${t}`, type: 'text' } })
   }
 
   return (

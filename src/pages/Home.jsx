@@ -129,6 +129,12 @@ function Home() {
         body: JSON.stringify(formData),
       }).catch(() => {})
 
+      // If phone matched and RSVP is positive, go straight to CarnetDeVoyage
+      if (contactRow && rsvp === 'yes') {
+        navigate('/carnet-de-voyage', { state: { num } })
+        return
+      }
+
       setSubmitted(true)
     } catch (err) {
       setError(err.message || 'Veuillez réessayer.')
@@ -141,114 +147,130 @@ function Home() {
 
   return (
     <div className="home page-enter">
-      <div className="home__container">
-        <div className="home__date">27 - 28 Juin 2026</div>
-        <h1 className="home__title">Ravigny</h1>
-        <div className="separator home__separator" />
-        <p className="home__subtitle">
-          Rejoins-nous pour le Charivari de Ravigny
-        </p>
+      {/* Hero — full viewport */}
+      <section className="home__hero">
+        <div className="home__hero-content">
+          <h1 className="home__title">Ravigny 2027</h1>
+          <p className="home__dates">27 - 28 Juin 2026</p>
+        </div>
+        <div className="home__scroll-hint" aria-hidden="true">
+          <span />
+        </div>
+      </section>
 
-        {submitted ? (
-          <div className="home__success">
-            <div className="home__success-icon"><IconCheckCircle size={32} /></div>
-            <h2 className="home__success-title">Réponse envoyée</h2>
-            <p className="home__success-text">
-              Merci ! Ta réponse a bien été enregistrée.
-            </p>
-            <div className="home__success-actions">
+      {/* About section */}
+      <section className="home__about">
+        <p className="home__about-text">
+          Un week-end entre amis au cœur de la campagne normande.
+          Musique, festin, grands feux et belles rencontres — le Charivari
+          de Ravigny revient pour une nouvelle édition.
+        </p>
+      </section>
+
+      {/* Form section */}
+      <section className="home__form-section">
+        <div className="home__container">
+          {submitted ? (
+            <div className="home__success">
+              <div className="home__success-icon"><IconCheckCircle size={32} /></div>
+              <h2 className="home__success-title">Réponse envoyée</h2>
+              <p className="home__success-text">
+                Merci ! Ta réponse a bien été enregistrée.
+              </p>
+              <div className="home__success-actions">
+                <button className="home__nav-link" onClick={() => navigate('/carnet-de-voyage')}>
+                  Carnet de Voyage
+                </button>
+                <button onClick={() => { setSubmitted(false); setFormData({ first_name: '', last_name: '', interest: 'présent(e)', countryCode: '+33', phone: '' }) }}>
+                  Nouvelle réponse
+                </button>
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className="home__prose-card card">
+                <form onSubmit={handleSubmit}>
+                  <p className="home__prose">
+                    Je soussigné(e){' '}
+                    <input
+                      ref={firstNameRef}
+                      type="text"
+                      name="first_name"
+                      className="inline-field home__inline-input"
+                      placeholder="Simbad"
+                      value={formData.first_name}
+                      onChange={handleChange}
+                      required
+                    />{' '}
+                    <input
+                      ref={lastNameRef}
+                      type="text"
+                      name="last_name"
+                      className="inline-field home__inline-input"
+                      placeholder="Le Marin"
+                      value={formData.last_name}
+                      onChange={handleChange}
+                      required
+                    />{' '}
+                    souhaite confirmer{' '}
+                    <span className="home__select-wrap">
+                      <select
+                        ref={interestRef}
+                        name="interest"
+                        className="inline-field home__inline-select"
+                        value={formData.interest}
+                        onChange={handleChange}
+                      >
+                        <option value="présent(e)">ma présence</option>
+                        <option value="absent(e)">mon absence</option>
+                      </select>
+                    </span>{' '}
+                    au Charivari de Ravigny 2026.
+                    Vous pouvez me joindre au{' '}
+                    <span className="home__phone-group">
+                      <select
+                        ref={countryCodeRef}
+                        name="countryCode"
+                        className="inline-field home__inline-select"
+                        value={formData.countryCode}
+                        onChange={handleChange}
+                      >
+                        {countryCodes.map(code => (
+                          <option key={code} value={code}>{code}</option>
+                        ))}
+                      </select>{' '}
+                      <input
+                        ref={phoneRef}
+                        type="tel"
+                        name="phone"
+                        className="inline-field home__inline-input"
+                        placeholder="06 12 34 56 78"
+                        value={formData.phone}
+                        onChange={handleChange}
+                        required
+                      />
+                    </span>.
+                  </p>
+
+                  <button type="submit" className="home__submit" disabled={submitting}>
+                    {submitting ? 'Envoi en cours...' : 'Envoyer ma réponse'}
+                  </button>
+
+                  {error && (
+                    <div className="home__message home__message--error">
+                      {error}
+                    </div>
+                  )}
+                </form>
+              </div>
+
               <button className="home__nav-link" onClick={() => navigate('/carnet-de-voyage')}>
                 Carnet de Voyage
               </button>
-              <button onClick={() => { setSubmitted(false); setFormData({ first_name: '', last_name: '', interest: 'présent(e)', countryCode: '+33', phone: '' }) }}>
-                Nouvelle réponse
-              </button>
-            </div>
-          </div>
-        ) : (
-          <>
-            <div className="home__prose-card card">
-              <form onSubmit={handleSubmit}>
-                <p className="home__prose">
-                  Je soussigné(e){' '}
-                  <input
-                    ref={firstNameRef}
-                    type="text"
-                    name="first_name"
-                    className="inline-field home__inline-input"
-                    placeholder="Simbad"
-                    value={formData.first_name}
-                    onChange={handleChange}
-                    required
-                  />{' '}
-                  <input
-                    ref={lastNameRef}
-                    type="text"
-                    name="last_name"
-                    className="inline-field home__inline-input"
-                    placeholder="Le Marin"
-                    value={formData.last_name}
-                    onChange={handleChange}
-                    required
-                  />{' '}
-                  souhaite confirmer{' '}
-                  <span className="home__select-wrap">
-                    <select
-                      ref={interestRef}
-                      name="interest"
-                      className="inline-field home__inline-select"
-                      value={formData.interest}
-                      onChange={handleChange}
-                    >
-                      <option value="présent(e)">ma présence</option>
-                      <option value="absent(e)">mon absence</option>
-                    </select>
-                  </span>{' '}
-                  au Charivari de Ravigny 2026.
-                  Vous pouvez me joindre au{' '}
-                  <span className="home__phone-group">
-                    <select
-                      ref={countryCodeRef}
-                      name="countryCode"
-                      className="inline-field home__inline-select"
-                      value={formData.countryCode}
-                      onChange={handleChange}
-                    >
-                      {countryCodes.map(code => (
-                        <option key={code} value={code}>{code}</option>
-                      ))}
-                    </select>{' '}
-                    <input
-                      ref={phoneRef}
-                      type="tel"
-                      name="phone"
-                      className="inline-field home__inline-input"
-                      placeholder="06 12 34 56 78"
-                      value={formData.phone}
-                      onChange={handleChange}
-                      required
-                    />
-                  </span>.
-                </p>
-
-                <button type="submit" className="home__submit" disabled={submitting}>
-                  {submitting ? 'Envoi en cours...' : 'Envoyer ma réponse'}
-                </button>
-
-                {error && (
-                  <div className="home__message home__message--error">
-                    {error}
-                  </div>
-                )}
-              </form>
-            </div>
-
-            <button className="home__nav-link" onClick={() => navigate('/carnet-de-voyage')}>
-              Carnet de Voyage
-            </button>
-          </>
-        )}
-      </div>
+            </>
+          )}
+        </div>
+      </section>
     </div>
   )
 }

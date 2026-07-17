@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useEffect, useRef } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase.js'
 import DateTimePicker from '../components/DateTimePicker.jsx'
 import { IconArrowLeft, IconCheck, IconTrain, IconCar, IconCarpool, IconTransport, IconSuitcase, IconEuro, IconCheckCircle } from '../components/Icons.jsx'
@@ -48,7 +48,7 @@ const TRANSLATIONS = {
     returnTrip: 'Trajet retour',
     departureTimeTrain: 'Heure prévue de départ',
     departureTimeOther: 'Je souhaite être rentré(e) avant le',
-    arrivalPlace: "Lieu d'arrivée",
+    arrivalPlace: "Lieu de retour",
     preparations: 'Préparatifs',
     itemsToPack: 'Affaires à prévoir',
     essentials: 'Indispensables',
@@ -142,6 +142,7 @@ const TRANSLATIONS = {
 
 function CarnetDeVoyage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [lang, setLang] = useState('fr')
   const t = TRANSLATIONS[lang]
   const [phone, setPhone] = useState('')
@@ -152,7 +153,7 @@ function CarnetDeVoyage() {
   const [participation, setParticipation] = useState(null) // event_participants row or null (new)
   const [unsaved, setUnsaved] = useState(false)
   const [hasAllergies, setHasAllergies] = useState(false)
-  const [returnTravelExplicit, setReturnTravelExplicit] = useState(false)
+
   const [arrivalPlaceExplicit, setArrivalPlaceExplicit] = useState(false)
   const [customAmount, setCustomAmount] = useState('')
   const [feedback, setFeedback] = useState(null) // 'saved' | 'save-error' | 'copied'
@@ -185,8 +186,8 @@ function CarnetDeVoyage() {
     return n
   }
 
-  async function checkPhone() {
-    const cleaned = normalizePhone(phone)
+  async function checkPhone(preNormalized) {
+    const cleaned = preNormalized || normalizePhone(phone)
     if (cleaned.length < 8) {
       setError(t.phoneError)
       return
@@ -229,7 +230,6 @@ function CarnetDeVoyage() {
       const travel = partRow?.arrival_travel || ''
       const returnTravel = partRow?.departure_travel || travel
       setArrivalPlaceExplicit(ap !== '' && ap !== dp)
-      setReturnTravelExplicit(returnTravel !== '' && returnTravel !== travel)
       setHasAllergies(!!(contactRow.allergies))
       setFormData({
         travel,
@@ -252,6 +252,15 @@ function CarnetDeVoyage() {
     }
   }
 
+  // Auto-load when arriving from Home with a pre-validated phone number
+  const autoLoaded = useRef(false)
+  useEffect(() => {
+    if (location.state?.num && !autoLoaded.current) {
+      autoLoaded.current = true
+      checkPhone(location.state.num)
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
   function handleFormChange(e) {
     const { name, value, type, checked } = e.target
     if (name === 'arrivalPlace') {
@@ -273,10 +282,11 @@ function CarnetDeVoyage() {
       if (value === 'car-driver') {
         // Driver must drive back
         returnTravel = 'car-driver'
-      } else if (!returnTravelExplicit || prev.returnTravel === 'car-driver') {
-        // Follow outbound if user hasn't explicitly chosen, or reset from car-driver
+      } else if (!prev.returnTravel || prev.returnTravel === prev.travel || prev.returnTravel === 'car-driver') {
+        // Return was mirroring outbound (or empty/forced from car-driver) → keep mirroring
         returnTravel = value
       } else {
+        // Return was explicitly set to something different → keep it
         returnTravel = prev.returnTravel
       }
       return { ...prev, travel: value, returnTravel }
@@ -316,7 +326,7 @@ function CarnetDeVoyage() {
       // 2. Update allergies on contact_info
       const { error: contactErr } = await supabase
         .from('contact_info')
-        .update({ allergies: formData.allergies || null })
+        .update({ allergies: hasAllergies ? (formData.allergies || null) : null })
         .eq('contact_id', contact.contact_id)
 
       if (contactErr) throw contactErr
@@ -443,14 +453,16 @@ function CarnetDeVoyage() {
                 <strong>{t.location} :</strong>{' '}
                 <a href="https://maps.app.goo.gl/bTb3fVHTLFH2Dcjp8">La Closerie du Champ-Hervé</a>
               </p>
-              <a
-                href="https://chat.whatsapp.com/TODO"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="cdv__whatsapp-btn"
-              >
-                {t.whatsapp}
-              </a>
+              {!participation?.in_wa && (
+                <a
+                  href="https://chat.whatsapp.com/TODO"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="cdv__whatsapp-btn"
+                >
+                  {t.whatsapp}
+                </a>
+              )}
             </section>
 
             {/* Transports */}
@@ -538,7 +550,6 @@ function CarnetDeVoyage() {
                         disabled={opt.disabled}
                         title={opt.title}
                         onClick={() => {
-                          setReturnTravelExplicit(true)
                           setFormData(prev => ({ ...prev, returnTravel: opt.value }))
                           setUnsaved(true)
                         }}
@@ -617,10 +628,7 @@ function CarnetDeVoyage() {
                     checked={hasAllergies}
                     onChange={e => {
                       setHasAllergies(e.target.checked)
-                      if (!e.target.checked) {
-                        setFormData(prev => ({ ...prev, allergies: '' }))
-                        setUnsaved(true)
-                      }
+                      setUnsaved(true)
                     }}
                   />
                   <span className="cdv__custom-checkbox">{hasAllergies && <IconCheck size={12} />}</span>
