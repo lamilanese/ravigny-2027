@@ -22,10 +22,7 @@ const TRANSLATIONS = {
     notFound: 'Aucune information trouvée pour ce numéro. Veuillez vérifier et réessayer.',
     notConfirmed: 'Veuillez confirmer votre présence.',
     connectionError: 'Erreur de connexion au serveur. Veuillez réessayer.',
-    saveSuccess: 'Modifications sauvegardées !',
     saveError: 'Erreur !',
-    saveConnectionError: 'Erreur de connexion au serveur.',
-    unsavedConfirm: 'Tu as des modifications non sauvegardées. Quitter quand même ?',
     greetingF: 'Chère',
     greetingM: 'Cher',
     introText: 'Entre pierres et forêts, nous vous avons préparé un refuge de lumière, une parenthèse suspendue, pour célébrer vos histoires, vos noms, et tout ce qui vous relie à travers les siècles.',
@@ -87,10 +84,7 @@ const TRANSLATIONS = {
     notFound: 'No information found for this number. Please check and try again.',
     notConfirmed: 'You haven\'t confirmed your attendance yet. Please fill in the form on the home page first!',
     connectionError: 'Server connection error. Please try again.',
-    saveSuccess: 'Changes saved!',
     saveError: 'Error!',
-    saveConnectionError: 'Server connection error.',
-    unsavedConfirm: 'You have unsaved changes. Leave anyway?',
     greetingF: 'Dear',
     greetingM: 'Dear',
     introText: 'Between stones and forests, we have prepared a refuge of light for you, a suspended parenthesis, to celebrate your stories, your names, and everything that connects you across the centuries.',
@@ -152,7 +146,6 @@ function CarnetDeVoyage() {
   const [error, setError] = useState(null)
   const [contact, setContact] = useState(null) // { contact_id, f_name, m_f }
   const [participation, setParticipation] = useState(null) // event_participants row or null (new)
-  const [unsaved, setUnsaved] = useState(false)
   const [hasAllergies, setHasAllergies] = useState(false)
 
   const [arrivalPlaceExplicit, setArrivalPlaceExplicit] = useState(false)
@@ -245,7 +238,8 @@ function CarnetDeVoyage() {
         allergies: contactRow.allergies || '',
         otherInfo: partRow?.comments || '',
       })
-      setUnsaved(false)
+      // Mark loaded after state updates have been enqueued
+      setTimeout(() => { dataLoaded.current = true }, 0)
     } catch {
       setError(t.connectionError)
     } finally {
@@ -255,12 +249,24 @@ function CarnetDeVoyage() {
 
   // Auto-load when arriving from Home with a pre-validated phone number
   const autoLoaded = useRef(false)
+  const dataLoaded = useRef(false)
   useEffect(() => {
     if (location.state?.num && !autoLoaded.current) {
       autoLoaded.current = true
       checkPhone(location.state.num)
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Autosave: debounce 2s after any form change, skip initial load
+  const autosaveTimer = useRef(null)
+  useEffect(() => {
+    if (!dataLoaded.current || !contact) return
+    clearTimeout(autosaveTimer.current)
+    autosaveTimer.current = setTimeout(() => {
+      saveData()
+    }, 2000)
+    return () => clearTimeout(autosaveTimer.current)
+  }, [formData, hasAllergies]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function handleFormChange(e) {
     const { name, value, type, checked } = e.target
@@ -274,7 +280,6 @@ function CarnetDeVoyage() {
       }
       return update
     })
-    setUnsaved(true)
   }
 
   function selectTravel(value) {
@@ -292,7 +297,6 @@ function CarnetDeVoyage() {
       }
       return { ...prev, travel: value, returnTravel }
     })
-    setUnsaved(true)
   }
 
   function showFeedback(key) {
@@ -332,7 +336,6 @@ function CarnetDeVoyage() {
 
       if (contactErr) throw contactErr
 
-      setUnsaved(false)
       showFeedback('saved')
     } catch {
       showFeedback('save-error')
@@ -342,9 +345,9 @@ function CarnetDeVoyage() {
   }
 
   function handleBack() {
-    if (unsaved && !window.confirm(t.unsavedConfirm)) {
-      return
-    }
+    // Flush any pending autosave immediately before navigating
+    clearTimeout(autosaveTimer.current)
+    if (dataLoaded.current && contact) saveData()
     navigate('/')
   }
 
@@ -375,9 +378,9 @@ function CarnetDeVoyage() {
             <h1 className="cdv__title">{t.title}</h1>
             <div className="cdv__header-actions">
               <button
-                onClick={saveData}
-                disabled={(!unsaved && feedback !== 'saved') || saving}
-                className={`cdv__header-btn cdv__save-btn ${feedback === 'saved' ? 'cdv__save-btn--confirmed' : feedback === 'save-error' ? 'cdv__save-btn--error' : unsaved ? 'cdv__save-btn--active' : 'cdv__save-btn--idle'}`}
+                onClick={() => { clearTimeout(autosaveTimer.current); saveData() }}
+                disabled={saving}
+                className={`cdv__header-btn cdv__save-btn ${feedback === 'saved' ? 'cdv__save-btn--confirmed' : feedback === 'save-error' ? 'cdv__save-btn--error' : 'cdv__save-btn--idle'}`}
               >
                 <span className="cdv__save-label">{saving ? t.saving : feedback === 'saved' ? t.saved : feedback === 'save-error' ? t.saveError : t.save}</span>
                 <IconCheck size={14} className="cdv__save-icon" />
@@ -553,10 +556,7 @@ function CarnetDeVoyage() {
                         className={`cdv__transport-compact-btn ${effectiveReturn === opt.value ? 'cdv__transport-compact-btn--selected' : ''}`}
                         disabled={opt.disabled}
                         title={opt.title}
-                        onClick={() => {
-                          setFormData(prev => ({ ...prev, returnTravel: opt.value }))
-                          setUnsaved(true)
-                        }}
+                        onClick={() => setFormData(prev => ({ ...prev, returnTravel: opt.value }))}
                       >
                         {opt.icon}
                       </button>
@@ -630,10 +630,7 @@ function CarnetDeVoyage() {
                   <input
                     type="checkbox"
                     checked={hasAllergies}
-                    onChange={e => {
-                      setHasAllergies(e.target.checked)
-                      setUnsaved(true)
-                    }}
+                    onChange={e => setHasAllergies(e.target.checked)}
                   />
                   <span className="cdv__custom-checkbox">{hasAllergies && <IconCheck size={12} />}</span>
                   {t.dietaryCheckbox}
