@@ -54,12 +54,14 @@ export default function DateTimePicker({ value, onChange, name, variant = 'arriv
           type="time"
           className="dtp__time-input"
           value={time}
+          disabled={!date}
           onChange={e => emit(date, e.target.value)}
         />
       ) : (
         <select
           className="dtp__time"
           value={time}
+          disabled={!date}
           onChange={e => emit(date, e.target.value)}
         >
           <option value="" disabled>Heure</option>
