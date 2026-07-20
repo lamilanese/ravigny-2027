@@ -172,6 +172,7 @@
 
 .cdv__phone-input {
   flex: 1;
+  border-radius: 50px;
 }
 
 .cdv__phone-btn {
@@ -258,7 +259,7 @@
 
 .cdv__widget::-webkit-scrollbar-thumb {
   background: rgba(120, 200, 240, 0.15);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
 }
 
 .cdv__widget::-webkit-scrollbar-thumb:hover {
@@ -277,7 +278,7 @@
 .cdv__widget-icon {
   width: 36px;
   height: 36px;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -505,6 +506,14 @@
   margin-top: 16px;
 }
 
+.cdv__map {
+  width: 100%;
+  aspect-ratio: 204.3 / 160;
+  margin-top: 12px;
+  border-radius: var(--radius-sm);
+  opacity: 0.85;
+}
+
 .cdv__trip-label {
   font-size: 12px;
   text-transform: uppercase;
@@ -639,7 +648,7 @@
 .cdv__custom-checkbox {
   width: 20px;
   height: 20px;
-  border-radius: 5px;
+  border-radius: var(--radius-sm);
   border: 1px solid var(--color-border);
   display: flex;
   align-items: center;

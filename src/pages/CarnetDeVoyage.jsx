@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase.js'
 import DateTimePicker from '../components/DateTimePicker.jsx'
 import { IconArrowLeft, IconCheck, IconTrain, IconCar, IconCarpool, IconTransport, IconSuitcase, IconEuro, IconCheckCircle } from '../components/Icons.jsx'
+import MapSvg from '../components/MapSvg.jsx'
 import './CarnetDeVoyage.css'
 
 const EVENT_ID = 'r27'
@@ -472,10 +473,13 @@ function CarnetDeVoyage() {
                 <h2 className="cdv__widget-title">{t.transports}</h2>
               </div>
 
-              <p className="cdv__intro-text">
-                {t.address} : <a href="https://maps.app.goo.gl/bTb3fVHTLFH2Dcjp8">81 Impasse de la Fontaine, 53 370 Ravigny</a><br />
-                {t.nearestStation} : <a href="https://maps.app.goo.gl/U8uyFPLMapRhoEdx6">Gare d&apos;Alençon</a> {t.stationDetail}
-              </p>
+              <div className="cdv__trip-card">
+                <p className="cdv__intro-text">
+                  {t.address} : <a href="https://maps.app.goo.gl/bTb3fVHTLFH2Dcjp8">81 Impasse de la Fontaine, 53 370 Ravigny</a><br />
+                  {t.nearestStation} : <a href="https://maps.app.goo.gl/U8uyFPLMapRhoEdx6">Gare d&apos;Alençon</a> {t.stationDetail}
+                </p>
+                <MapSvg className="cdv__map" />
+              </div>
 
               {/* Trajet aller */}
               <div className="cdv__trip-card">
