@@ -425,7 +425,7 @@ function CarnetDeVoyage() {
                 onKeyDown={e => e.key === 'Enter' && checkPhone()}
                 className="cdv__phone-input"
               />
-              <button onClick={checkPhone} disabled={loading} className="cdv__phone-btn">
+              <button onClick={() => checkPhone()} disabled={loading} className="cdv__phone-btn">
                 {loading ? t.loading : t.validate}
               </button>
             </div>
