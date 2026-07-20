@@ -314,7 +314,7 @@ function CarnetDeVoyage() {
           departure_datetime: formData.departureDateTime || null,
           departure_place: formData.departurePlace || null,
           arrival_place: formData.arrivalPlace || null,
-          spots_number: formData.spotsNumber ? Number(formData.spotsNumber) : null,
+          spots_number: formData.travel === 'car-driver' && formData.spotsNumber ? Number(formData.spotsNumber) : null,
           driver_name: formData.driverName || null,
           mat: formData.mat,
           comments: formData.otherInfo || null,
@@ -349,13 +349,13 @@ function CarnetDeVoyage() {
 
   const isDriver = formData.travel === 'car-driver'
   const isTrain = formData.travel === 'train'
-  const isDunno = formData.travel === 'dunno'
+  const isDunno = formData.travel === 'passenger'
   const showLocations = isDriver || isDunno
 
   const effectiveReturn = formData.returnTravel || formData.travel
   const isReturnDriver = effectiveReturn === 'car-driver'
   const isReturnTrain = effectiveReturn === 'train'
-  const isReturnDunno = effectiveReturn === 'dunno'
+  const isReturnDunno = effectiveReturn === 'passenger'
   const showReturnLocations = isReturnDriver || isReturnDunno
 
   // Progress tracking
@@ -484,7 +484,7 @@ function CarnetDeVoyage() {
                 <div className="cdv__transport-cards">
                   {[
                     { value: 'car-driver', icon: <IconCar size={24} />, label: t.driver },
-                    { value: 'dunno', icon: <IconCarpool size={24} />, label: t.carpool },
+                    { value: 'passenger', icon: <IconCarpool size={24} />, label: t.carpool },
                     { value: 'train', icon: <IconTrain size={24} />, label: t.train },
                   ].map(opt => (
                     <label
@@ -540,7 +540,7 @@ function CarnetDeVoyage() {
                     <div className="cdv__transport-compact">
                     {[
                       { value: 'car-driver', icon: <IconCar size={18} />, disabled: true, title: t.driver },
-                      { value: 'dunno', icon: <IconCarpool size={18} />, disabled: false, title: t.carpool },
+                      { value: 'passenger', icon: <IconCarpool size={18} />, disabled: false, title: t.carpool },
                       { value: 'train', icon: <IconTrain size={18} />, disabled: false, title: t.train },
                     ].map(opt => (
                       <button
