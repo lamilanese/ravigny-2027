@@ -303,11 +303,20 @@ textarea {
 .dtp__time,
 .dtp__time-input {
   width: 90px;
+  max-width: 100%;
   min-width: 0;
+  box-sizing: border-box;
   text-align: center;
   font-family: var(--font-heading);
   font-size: 1rem;
   padding: 8px 10px;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.dtp__time--disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
 }
 
 /* Hide the native clock icon so it fits in the same width as the dropdown */
@@ -317,6 +326,7 @@ textarea {
 
 .dtp__time-input::-webkit-datetime-edit {
   padding: 0;
+  text-align: center;
 }
 
 /* Firefox: hide inner spin/clear buttons */

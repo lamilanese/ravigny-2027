@@ -52,19 +52,18 @@ export default function DateTimePicker({ value, onChange, name, variant = 'arriv
       {precise ? (
         <input
           type="time"
-          className="dtp__time-input"
-          value={time}
+          className={`dtp__time-input ${!date ? 'dtp__time--disabled' : ''}`}
+          value={time || '12:00'}
           disabled={!date}
           onChange={e => emit(date, e.target.value)}
         />
       ) : (
         <select
-          className="dtp__time"
-          value={time}
+          className={`dtp__time ${!date ? 'dtp__time--disabled' : ''}`}
+          value={time || '12:00'}
           disabled={!date}
           onChange={e => emit(date, e.target.value)}
         >
-          <option value="" disabled>Heure</option>
           {TIMES.map(t => (
             <option key={t} value={t}>
               {t.replace(':', 'h')}
