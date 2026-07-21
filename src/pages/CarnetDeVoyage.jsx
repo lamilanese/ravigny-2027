@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase.js'
 import DateTimePicker from '../components/DateTimePicker.jsx'
-import { IconArrowLeft, IconCheck, IconTrain, IconCar, IconCarpool, IconTransport, IconSuitcase, IconEuro, IconCheckCircle, IconUser } from '../components/Icons.jsx'
+import { IconArrowLeft, IconCheck, IconTrain, IconCar, IconCarpool, IconTransport, IconSuitcase, IconEuro, IconCheckCircle } from '../components/Icons.jsx'
 import MapSvg from '../components/MapSvg.jsx'
 import './CarnetDeVoyage.css'
 
@@ -474,18 +474,6 @@ function CarnetDeVoyage() {
     navigate('/')
   }
 
-  function handleChangeNumber() {
-    clearTimeout(autosaveTimer.current)
-    if (dataLoaded.current && contact) saveData()
-    localStorage.removeItem('cdv_phone')
-    setContact(null)
-    setParticipation(null)
-    setGroupMembers([])
-    setPhone('')
-    setError(null)
-    dataLoaded.current = false
-    autoLoaded.current = false
-  }
 
   const isDriver = formData.travel === 'car-driver'
   const isTrain = formData.travel === 'train'
@@ -520,15 +508,6 @@ function CarnetDeVoyage() {
               >
                 <span className="cdv__save-label">{saving ? t.saving : feedback === 'saved' ? t.saved : feedback === 'save-error' ? t.saveError : t.save}</span>
                 <IconCheck size={14} className="cdv__save-icon" />
-              </button>
-              <button
-                type="button"
-                className="cdv__header-btn cdv__change-btn"
-                onClick={handleChangeNumber}
-                title={lang === 'fr' ? 'Changer de numéro' : 'Change number'}
-              >
-                <span className="cdv__change-label">{participant.name}</span>
-                <IconUser size={14} className="cdv__change-icon" />
               </button>
             </div>
           </div>
