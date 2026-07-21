@@ -7,6 +7,10 @@ import MapSvg from '../components/MapSvg.jsx'
 import './CarnetDeVoyage.css'
 
 const EVENT_ID = 'r27'
+const FULL_RATE = 45
+const REDUCED_RATE = 30
+const CHILD_FREE_AGE = 6
+const EVENT_DATE = new Date('2026-06-26')
 
 const TRANSLATIONS = {
   fr: {
@@ -70,6 +74,14 @@ const TRANSLATIONS = {
     copied: 'Copié !',
     essentialItems: ['Sac de couchage', 'Costume', 'Affaires chaudes', 'Maillot et serviette de bain', 'Affaires salissables'],
     optionalItems: ['Lampe torche', 'Appareil photo', 'Instrument de musique'],
+    family: 'Famille',
+    familyMembers: 'Participants',
+    attending: 'Présent',
+    notAttending: 'Absent',
+    transportShared: "Merci de signaler si l'un des participants ne fait pas le trajet avec le reste de la famille.",
+    yearsOld: 'ans',
+    free: 'gratuit',
+    totalAmount: 'Montant suggéré',
   },
   en: {
     retour: 'Back',
@@ -132,6 +144,14 @@ const TRANSLATIONS = {
     copied: 'Copied!',
     essentialItems: ['Sleeping bag', 'Costume/Suit', 'Warm clothes', 'Swimsuit and towel', 'Clothes that can get dirty'],
     optionalItems: ['Flashlight', 'Camera', 'Musical instrument'],
+    family: 'Family',
+    familyMembers: 'Participants',
+    attending: 'Attending',
+    notAttending: 'Not attending',
+    transportShared: 'Please let us know if one of the participants is not travelling with the rest of the family.',
+    yearsOld: 'y/o',
+    free: 'free',
+    totalAmount: 'Suggested amount',
   },
 }
 
@@ -147,6 +167,8 @@ function CarnetDeVoyage() {
   const [contact, setContact] = useState(null) // { contact_id, f_name, m_f }
   const [participation, setParticipation] = useState(null) // event_participants row or null (new)
   const [hasAllergies, setHasAllergies] = useState(false)
+
+  const [groupMembers, setGroupMembers] = useState([]) // [{ contact_id, f_name, l_name, birthday, allergies, rsvp }]
 
   const [arrivalPlaceExplicit, setArrivalPlaceExplicit] = useState(false)
   const [customAmount, setCustomAmount] = useState('')
@@ -166,10 +188,13 @@ function CarnetDeVoyage() {
   })
 
   // Derived — keeps JSX references like `participant.xxx` working via a compat shim
+  const groupPayed = groupMembers.length > 1
+    ? groupMembers.some(m => m.payed != null)
+    : participation?.payed != null
   const participant = contact ? {
     name: contact.f_name,
     mf: contact.m_f,
-    payed: participation?.payed != null,
+    payed: groupPayed,
   } : null
 
   function normalizePhone(raw) {
@@ -179,6 +204,23 @@ function CarnetDeVoyage() {
     if (n.startsWith('0')) n = '33' + n.slice(1)
     return n
   }
+
+  function ageAtEvent(birthday) {
+    if (!birthday) return null
+    const b = new Date(birthday)
+    let age = EVENT_DATE.getFullYear() - b.getFullYear()
+    const m = EVENT_DATE.getMonth() - b.getMonth()
+    if (m < 0 || (m === 0 && EVENT_DATE.getDate() < b.getDate())) age--
+    return age
+  }
+
+  // Compute group payment total from attending members
+  const attendingMembers = groupMembers.filter(m => m.rsvp === 'yes')
+  const groupAdults = attendingMembers.filter(m => ageAtEvent(m.birthday) === null || ageAtEvent(m.birthday) >= 18).length
+  const groupChildrenPaying = attendingMembers.filter(m => { const a = ageAtEvent(m.birthday); return a !== null && a < 18 && a > CHILD_FREE_AGE }).length
+  const groupChildrenFree = attendingMembers.filter(m => { const a = ageAtEvent(m.birthday); return a !== null && a <= CHILD_FREE_AGE }).length
+  const groupTotal = groupAdults * FULL_RATE + groupChildrenPaying * REDUCED_RATE
+  const hasGroup = groupMembers.length > 1
 
   async function checkPhone(preNormalized) {
     const cleaned = preNormalized || normalizePhone(phone)
@@ -194,7 +236,7 @@ function CarnetDeVoyage() {
       // 1. Look up contact by phone number
       const { data: contactRow, error: contactErr } = await supabase
         .from('contact_info')
-        .select('contact_id, f_name, m_f, allergies')
+        .select('contact_id, f_name, m_f, allergies, group_id')
         .eq('num', cleaned)
         .single()
 
@@ -218,6 +260,28 @@ function CarnetDeVoyage() {
 
       setContact(contactRow)
       setParticipation(partRow)
+
+      // 3. Fetch group members if contact has a group
+      if (contactRow.group_id) {
+        const { data: members } = await supabase
+          .rpc('get_group_members', { gid: contactRow.group_id })
+
+        if (members && members.length > 0) {
+          // Join with event_participants to get rsvp + payed status
+          const { data: participations } = await supabase
+            .from('event_participants')
+            .select('contact_id, rsvp, payed')
+            .eq('event_id', EVENT_ID)
+            .in('contact_id', members.map(m => m.contact_id))
+
+          const partMap = Object.fromEntries((participations || []).map(p => [p.contact_id, p]))
+          setGroupMembers(members.map(m => ({
+            ...m,
+            rsvp: partMap[m.contact_id]?.rsvp || null,
+            payed: partMap[m.contact_id]?.payed,
+          })))
+        }
+      }
 
       const dp = partRow?.departure_place || ''
       const ap = partRow?.arrival_place || ''
@@ -263,10 +327,10 @@ function CarnetDeVoyage() {
     if (!dataLoaded.current || !contact) return
     clearTimeout(autosaveTimer.current)
     autosaveTimer.current = setTimeout(() => {
-      saveData()
+      saveData({ silent: true })
     }, 2000)
     return () => clearTimeout(autosaveTimer.current)
-  }, [formData, hasAllergies]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [formData, hasAllergies, groupMembers]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function handleFormChange(e) {
     const { name, value, type, checked } = e.target
@@ -304,23 +368,27 @@ function CarnetDeVoyage() {
     setTimeout(() => setFeedback(prev => prev === key ? null : prev), 2000)
   }
 
-  async function saveData() {
+  async function saveData({ silent = false } = {}) {
     setSaving(true)
     try {
-      // 1. Upsert event_participants
+      const travelData = {
+        arrival_travel: formData.travel || null,
+        departure_travel: formData.returnTravel || formData.travel || null,
+        arrival_datetime: formData.arrivalDateTime || null,
+        departure_datetime: formData.departureDateTime || null,
+        departure_place: formData.departurePlace || null,
+        arrival_place: formData.arrivalPlace || null,
+        spots_number: formData.travel === 'car-driver' && formData.spotsNumber ? Number(formData.spotsNumber) : null,
+        driver_name: formData.driverName || null,
+      }
+
+      // 1. Upsert current user's event_participants
       const { error: partErr } = await supabase
         .from('event_participants')
         .upsert({
           event_id: EVENT_ID,
           contact_id: contact.contact_id,
-          arrival_travel: formData.travel || null,
-          departure_travel: formData.returnTravel || formData.travel || null,
-          arrival_datetime: formData.arrivalDateTime || null,
-          departure_datetime: formData.departureDateTime || null,
-          departure_place: formData.departurePlace || null,
-          arrival_place: formData.arrivalPlace || null,
-          spots_number: formData.travel === 'car-driver' && formData.spotsNumber ? Number(formData.spotsNumber) : null,
-          driver_name: formData.driverName || null,
+          ...travelData,
           mat: formData.mat,
           comments: formData.otherInfo || null,
           updated_at: new Date().toISOString(),
@@ -328,20 +396,71 @@ function CarnetDeVoyage() {
 
       if (partErr) throw partErr
 
-      // 2. Update allergies on contact_info
-      const { error: contactErr } = await supabase
-        .from('contact_info')
-        .update({ allergies: hasAllergies ? (formData.allergies || null) : null })
-        .eq('contact_id', contact.contact_id)
+      // 2. Apply travel to all group members
+      if (hasGroup) {
+        const otherMembers = attendingMembers
+          .filter(m => m.contact_id !== contact.contact_id)
+        for (const m of otherMembers) {
+          await supabase
+            .from('event_participants')
+            .upsert({
+              event_id: EVENT_ID,
+              contact_id: m.contact_id,
+              ...travelData,
+              updated_at: new Date().toISOString(),
+            }, { onConflict: 'event_id,contact_id' })
+        }
+      }
 
-      if (contactErr) throw contactErr
+      // 3. Update allergies on contact_info
+      if (hasGroup) {
+        for (const m of groupMembers) {
+          await supabase
+            .from('contact_info')
+            .update({ allergies: m.allergies || null })
+            .eq('contact_id', m.contact_id)
+        }
+      } else {
+        const { error: contactErr } = await supabase
+          .from('contact_info')
+          .update({ allergies: hasAllergies ? (formData.allergies || null) : null })
+          .eq('contact_id', contact.contact_id)
+        if (contactErr) throw contactErr
+      }
 
-      showFeedback('saved')
+      if (!silent) showFeedback('saved')
     } catch {
       showFeedback('save-error')
     } finally {
       setSaving(false)
     }
+  }
+
+  async function toggleMemberRsvp(memberId, currentRsvp) {
+    const newRsvp = currentRsvp === 'yes' ? 'no' : 'yes'
+    const { error } = await supabase
+      .from('event_participants')
+      .upsert({
+        event_id: EVENT_ID,
+        contact_id: memberId,
+        rsvp: newRsvp,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'event_id,contact_id' })
+    if (!error) {
+      setGroupMembers(prev => prev.map(m =>
+        m.contact_id === memberId ? { ...m, rsvp: newRsvp } : m
+      ))
+    }
+  }
+
+  async function updateMemberAllergies(memberId, allergies) {
+    await supabase
+      .from('contact_info')
+      .update({ allergies: allergies || null })
+      .eq('contact_id', memberId)
+    setGroupMembers(prev => prev.map(m =>
+      m.contact_id === memberId ? { ...m, allergies } : m
+    ))
   }
 
   function handleBack() {
@@ -423,6 +542,8 @@ function CarnetDeVoyage() {
             <div className="cdv__phone-row">
               <input
                 type="tel"
+                name="tel"
+                autoComplete="tel"
                 placeholder="06 12 34 56 78"
                 value={phone}
                 onChange={e => setPhone(e.target.value)}
@@ -469,12 +590,28 @@ function CarnetDeVoyage() {
               )}
             </section>
 
+            {/* Section shortcuts (mobile) */}
+            <nav className="cdv__shortcuts">
+              <a href="#preparations" className="cdv__shortcut" onClick={e => { e.preventDefault(); document.getElementById('preparations')?.scrollIntoView({ behavior: 'smooth' }) }}>
+                {t.preparations}
+              </a>
+              <a href="#transports" className="cdv__shortcut" onClick={e => { e.preventDefault(); document.getElementById('transports')?.scrollIntoView({ behavior: 'smooth' }) }}>
+                {t.transports}
+              </a>
+              <a href="#financial" className="cdv__shortcut" onClick={e => { e.preventDefault(); document.getElementById('financial')?.scrollIntoView({ behavior: 'smooth' }) }}>
+                {t.financialTitle}
+              </a>
+            </nav>
+
             {/* Transports */}
-            <section className="cdv__widget">
+            <section id="transports" className="cdv__widget">
               <div className="cdv__widget-header">
                 <div className="cdv__widget-icon"><IconTransport size={18} /></div>
                 <h2 className="cdv__widget-title">{t.transports}</h2>
               </div>
+              {hasGroup && (
+                <p className="cdv__group-note">{t.transportShared}</p>
+              )}
 
               <div className="cdv__trip-card">
                 <p className="cdv__intro-text">
@@ -589,11 +726,57 @@ function CarnetDeVoyage() {
           {/* RIGHT COLUMN */}
           <div className="cdv__column">
             {/* Préparatifs */}
-            <section className="cdv__widget">
+            <section id="preparations" className="cdv__widget">
               <div className="cdv__widget-header">
                 <div className="cdv__widget-icon"><IconSuitcase size={18} /></div>
                 <h2 className="cdv__widget-title">{t.preparations}</h2>
               </div>
+
+              {/* Participants (group only) */}
+              {hasGroup && (
+                <div className="cdv__trip-card">
+                  <div className="cdv__trip-label">{t.familyMembers}</div>
+                  <div className="cdv__family-list">
+                    {groupMembers.map(m => {
+                      const age = ageAtEvent(m.birthday)
+                      const isMinor = age !== null && age < 18
+                      const attending = m.rsvp === 'yes'
+                      return (
+                        <div key={m.contact_id} className={`cdv__family-member ${!attending ? 'cdv__family-member--absent' : ''}`}>
+                          <div className="cdv__family-row">
+                            <button
+                              type="button"
+                              className={`cdv__family-toggle ${attending ? 'cdv__family-toggle--yes' : 'cdv__family-toggle--no'}`}
+                              onClick={() => toggleMemberRsvp(m.contact_id, m.rsvp)}
+                              title={attending ? t.attending : t.notAttending}
+                            >
+                              {attending ? <IconCheck size={12} /> : '\u00D7'}
+                            </button>
+                            <span className="cdv__family-name">
+                              {m.f_name} {m.l_name}
+                              {isMinor && <span className="cdv__family-age"> ({age} {t.yearsOld})</span>}
+                            </span>
+                          </div>
+                          {attending && (
+                            <input
+                              type="text"
+                              className="cdv__family-allergies"
+                              placeholder={`${t.dietaryCheckbox} (${t.dietaryPlaceholder.toLowerCase()})`}
+                              value={m.allergies || ''}
+                              onChange={e => {
+                                const val = e.target.value
+                                setGroupMembers(prev => prev.map(gm =>
+                                  gm.contact_id === m.contact_id ? { ...gm, allergies: val } : gm
+                                ))
+                              }}
+                            />
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
 
               <div className="cdv__trip-card">
                 <div className="cdv__trip-label">{t.itemsToPack}</div>
@@ -626,26 +809,30 @@ function CarnetDeVoyage() {
               <div className="cdv__trip-card">
                 <div className="cdv__trip-label">{t.otherInfo}</div>
 
-                <label className={`cdv__checkbox-label ${hasAllergies ? 'cdv__checkbox-label--checked' : ''}`}>
-                  <input
-                    type="checkbox"
-                    checked={hasAllergies}
-                    onChange={e => setHasAllergies(e.target.checked)}
-                  />
-                  <span className="cdv__custom-checkbox">{hasAllergies && <IconCheck size={12} />}</span>
-                  {t.dietaryCheckbox}
-                </label>
+                {!hasGroup && (
+                  <>
+                    <label className={`cdv__checkbox-label ${hasAllergies ? 'cdv__checkbox-label--checked' : ''}`}>
+                      <input
+                        type="checkbox"
+                        checked={hasAllergies}
+                        onChange={e => setHasAllergies(e.target.checked)}
+                      />
+                      <span className="cdv__custom-checkbox">{hasAllergies && <IconCheck size={12} />}</span>
+                      {t.dietaryCheckbox}
+                    </label>
 
-                {hasAllergies && (
-                  <div className="cdv__field">
-                    <input
-                      type="text"
-                      name="allergies"
-                      value={formData.allergies}
-                      onChange={handleFormChange}
-                      placeholder={t.dietaryPlaceholder}
-                    />
-                  </div>
+                    {hasAllergies && (
+                      <div className="cdv__field">
+                        <input
+                          type="text"
+                          name="allergies"
+                          value={formData.allergies}
+                          onChange={handleFormChange}
+                          placeholder={t.dietaryPlaceholder}
+                        />
+                      </div>
+                    )}
+                  </>
                 )}
 
                 <div className="cdv__section-label">{t.comments}</div>
@@ -663,12 +850,12 @@ function CarnetDeVoyage() {
 
             {/* Participation financière */}
             {participant.payed ? (
-              <section className="cdv__widget cdv__widget--no-fade cdv__widget--paid">
+              <section id="financial" className="cdv__widget cdv__widget--no-fade cdv__widget--paid">
                 <IconCheckCircle size={20} />
                 {t.financialPaid}
               </section>
             ) : (
-              <section className="cdv__widget cdv__widget--no-fade">
+              <section id="financial" className="cdv__widget cdv__widget--no-fade">
               <div className="cdv__widget-header">
                 <div className="cdv__widget-icon cdv__widget-icon--accent"><IconEuro size={18} /></div>
                 <h2 className="cdv__widget-title">{t.financialTitle}</h2>
@@ -682,50 +869,100 @@ function CarnetDeVoyage() {
                   <div className="cdv__trip-card">
                     <div className="cdv__trip-label">{t.sendByWero}</div>
 
-                    <div className="cdv__wero-cards">
-                      <button
-                        type="button"
-                        className="cdv__wero-card"
-                        onClick={() => { saveData(); window.open('https://start.wero-wallet.eu/?wero-uc=share&wero-url=https%3A%2F%2Fshare.weropay.eu%2Fp%2F1%2Fs%2FwxTpGaZPWf%3Fa%3D3000%26c%3DEUR', '_blank'); }}
-                      >
-                        <span className="cdv__wero-amount">30&euro;</span>
-                        <span className="cdv__wero-label">{t.reducedRate}</span>
-                      </button>
-                      <button
-                        type="button"
-                        className="cdv__wero-card"
-                        onClick={() => { saveData(); window.open('https://start.wero-wallet.eu/?wero-uc=share&wero-url=https%3A%2F%2Fshare.weropay.eu%2Fp%2F1%2Fs%2FwxTpGaZPWf%3Fa%3D4500%26c%3DEUR', '_blank'); }}
-                      >
-                        <span className="cdv__wero-amount">45&euro;</span>
-                        <span className="cdv__wero-label">{t.fullRate}</span>
-                      </button>
-                    </div>
+                    {hasGroup ? (
+                      <>
+                        <div className="cdv__wero-cards cdv__wero-cards--single">
+                          <button
+                            type="button"
+                            className="cdv__wero-card"
+                            onClick={() => { saveData(); window.open(`https://start.wero-wallet.eu/?wero-uc=share&wero-url=https%3A%2F%2Fshare.weropay.eu%2Fp%2F1%2Fs%2FwxTpGaZPWf%3Fa%3D${groupTotal * 100}%26c%3DEUR`, '_blank'); }}
+                          >
+                            <span className="cdv__wero-amount">{groupTotal}&euro;</span>
+                            <span className="cdv__wero-label">{t.totalAmount}</span>
+                            <span className="cdv__wero-breakdown">
+                              {[
+                                groupAdults > 0 && `${groupAdults} \u00D7 ${FULL_RATE}\u20AC`,
+                                groupChildrenPaying > 0 && `${groupChildrenPaying} \u00D7 ${REDUCED_RATE}\u20AC`,
+                                groupChildrenFree > 0 && `${groupChildrenFree} \u00D7 ${t.free}`,
+                              ].filter(Boolean).join(' + ')}
+                            </span>
+                          </button>
+                        </div>
 
-                    <div className="cdv__custom-amount">
-                      <span className="cdv__custom-amount-label">{t.otherAmount}</span>
-                      <input
-                        type="number"
-                        min="0.01"
-                        step="0.01"
-                        placeholder="0.00"
-                        className="cdv__custom-amount-input"
-                        value={customAmount}
-                        onChange={e => setCustomAmount(e.target.value)}
-                      />
-                      <span className="cdv__custom-amount-currency">&euro;</span>
-                      <button
-                        type="button"
-                        className="cdv__custom-amount-btn"
-                        disabled={!customAmount || Number(customAmount) <= 0}
-                        onClick={() => {
-                          const cents = Math.round(Number(customAmount) * 100)
-                          saveData()
-                          window.open(`https://start.wero-wallet.eu/?wero-uc=share&wero-url=https%3A%2F%2Fshare.weropay.eu%2Fp%2F1%2Fs%2FwxTpGaZPWf%3Fa%3D${cents}%26c%3DEUR`, '_blank')
-                        }}
-                      >
-                        &#8594;
-                      </button>
-                    </div>
+                        <div className="cdv__custom-amount">
+                          <span className="cdv__custom-amount-label">{t.otherAmount}</span>
+                          <input
+                            type="number"
+                            min="0.01"
+                            step="0.01"
+                            placeholder="0.00"
+                            className="cdv__custom-amount-input"
+                            value={customAmount}
+                            onChange={e => setCustomAmount(e.target.value)}
+                          />
+                          <span className="cdv__custom-amount-currency">&euro;</span>
+                          <button
+                            type="button"
+                            className="cdv__custom-amount-btn"
+                            disabled={!customAmount || Number(customAmount) <= 0}
+                            onClick={() => {
+                              const cents = Math.round(Number(customAmount) * 100)
+                              saveData()
+                              window.open(`https://start.wero-wallet.eu/?wero-uc=share&wero-url=https%3A%2F%2Fshare.weropay.eu%2Fp%2F1%2Fs%2FwxTpGaZPWf%3Fa%3D${cents}%26c%3DEUR`, '_blank')
+                            }}
+                          >
+                            &#8594;
+                          </button>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="cdv__wero-cards">
+                          <button
+                            type="button"
+                            className="cdv__wero-card"
+                            onClick={() => { saveData(); window.open(`https://start.wero-wallet.eu/?wero-uc=share&wero-url=https%3A%2F%2Fshare.weropay.eu%2Fp%2F1%2Fs%2FwxTpGaZPWf%3Fa%3D${REDUCED_RATE * 100}%26c%3DEUR`, '_blank'); }}
+                          >
+                            <span className="cdv__wero-amount">{REDUCED_RATE}&euro;</span>
+                            <span className="cdv__wero-label">{t.reducedRate}</span>
+                          </button>
+                          <button
+                            type="button"
+                            className="cdv__wero-card"
+                            onClick={() => { saveData(); window.open(`https://start.wero-wallet.eu/?wero-uc=share&wero-url=https%3A%2F%2Fshare.weropay.eu%2Fp%2F1%2Fs%2FwxTpGaZPWf%3Fa%3D${FULL_RATE * 100}%26c%3DEUR`, '_blank'); }}
+                          >
+                            <span className="cdv__wero-amount">{FULL_RATE}&euro;</span>
+                            <span className="cdv__wero-label">{t.fullRate}</span>
+                          </button>
+                        </div>
+
+                        <div className="cdv__custom-amount">
+                          <span className="cdv__custom-amount-label">{t.otherAmount}</span>
+                          <input
+                            type="number"
+                            min="0.01"
+                            step="0.01"
+                            placeholder="0.00"
+                            className="cdv__custom-amount-input"
+                            value={customAmount}
+                            onChange={e => setCustomAmount(e.target.value)}
+                          />
+                          <span className="cdv__custom-amount-currency">&euro;</span>
+                          <button
+                            type="button"
+                            className="cdv__custom-amount-btn"
+                            disabled={!customAmount || Number(customAmount) <= 0}
+                            onClick={() => {
+                              const cents = Math.round(Number(customAmount) * 100)
+                              saveData()
+                              window.open(`https://start.wero-wallet.eu/?wero-uc=share&wero-url=https%3A%2F%2Fshare.weropay.eu%2Fp%2F1%2Fs%2FwxTpGaZPWf%3Fa%3D${cents}%26c%3DEUR`, '_blank')
+                            }}
+                          >
+                            &#8594;
+                          </button>
+                        </div>
+                      </>
+                    )}
                   </div>
 
                   <div className="cdv__virement">

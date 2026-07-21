@@ -372,6 +372,131 @@
   background: rgba(100, 220, 180, 0.18);
 }
 
+/* Section shortcuts (mobile only) */
+.cdv__shortcuts {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .cdv__shortcuts {
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .cdv__shortcut {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: var(--color-text-secondary, #aaa);
+    font-size: 13px;
+    text-decoration: none;
+    transition: background 0.15s, color 0.15s;
+  }
+
+  .cdv__shortcut:hover,
+  .cdv__shortcut:active {
+    background: rgba(255, 255, 255, 0.12);
+    color: var(--color-text, #fff);
+    text-decoration: none;
+  }
+}
+
+/* Family section */
+.cdv__family-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cdv__family-member {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.02);
+  transition: opacity 0.2s;
+}
+
+.cdv__family-member--absent {
+  opacity: 0.4;
+}
+
+.cdv__family-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cdv__family-toggle {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  transition: all 0.2s;
+  padding: 0;
+}
+
+.cdv__family-toggle--yes {
+  background: rgba(100, 220, 180, 0.15);
+  border: 1px solid rgba(100, 220, 180, 0.4);
+}
+
+.cdv__family-toggle--yes .icon {
+  stroke: var(--color-success);
+}
+
+.cdv__family-toggle--no {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+}
+
+.cdv__family-name {
+  font-size: 15px;
+  color: var(--color-text);
+  white-space: nowrap;
+}
+
+.cdv__family-age {
+  color: var(--color-text-muted);
+  font-size: 13px;
+}
+
+.cdv__family-allergies {
+  width: 100%;
+  font-size: 13px;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  box-sizing: border-box;
+}
+
+/* Group transport note */
+.cdv__group-note {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  opacity: 0.7;
+  margin-bottom: 8px;
+  font-style: italic;
+}
+
+
+.cdv__wero-breakdown {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  opacity: 0.7;
+}
+
 /* Transport cards */
 .cdv__transport-cards {
   display: grid;
@@ -694,6 +819,14 @@
   margin: 16px 0 12px;
 }
 
+.cdv__wero-cards--single {
+  grid-template-columns: 1fr;
+}
+
+.cdv__wero-cards--single .cdv__wero-card {
+  width: 100%;
+}
+
 .cdv__wero-card {
   display: flex;
   flex-direction: column;
@@ -934,10 +1067,14 @@
   }
 
   .cdv__column {
-    flex: none;
-    width: 100%;
-    overflow: visible;
+    display: contents;
   }
+
+  /* Mobile order: Intro → shortcuts → Préparatifs → Transports → Financial */
+  .cdv__shortcuts { order: 0; }
+  #preparations { order: 1; }
+  #transports { order: 2; }
+  #financial, .cdv__widget--paid { order: 3; }
 
   .cdv__widget {
     overflow-y: visible;
