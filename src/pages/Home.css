@@ -5,6 +5,34 @@
   position: relative;
 }
 
+/* Language toggle */
+.home__lang-btn {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 50;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-primary-hover);
+  border-radius: 50px;
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.home__lang-btn:hover {
+  border-color: var(--color-border-hover);
+  background: rgba(255, 255, 255, 0.03);
+}
+
 /* Animated background gradient */
 .home::before {
   content: '';

@@ -7,6 +7,53 @@ import './Home.css'
 const BACKEND_URL = 'https://ravigny-backend-ter.vercel.app/api/send-telegram'
 const EVENT_ID = 'r27'
 
+const TRANSLATIONS = {
+  fr: {
+    title: 'Ravigny 2027',
+    dates: '27 - 28 Juin 2026',
+    about: 'Un week-end entre amis au c\u0153ur de la campagne normande. Musique, festin, grands feux et belles rencontres \u2014 le Charivari de Ravigny revient pour une nouvelle \u00e9dition.',
+    prose1: 'Je soussign\u00e9(e)',
+    prose2: 'souhaite confirmer',
+    prose3: 'au Charivari de Ravigny 2026. Vous pouvez me joindre au',
+    presenceOption: 'ma pr\u00e9sence',
+    absenceOption: 'mon absence',
+    presenceValue: 'pr\u00e9sent(e)',
+    absenceValue: 'absent(e)',
+    firstNamePlaceholder: 'Simbad',
+    lastNamePlaceholder: 'Le Marin',
+    phonePlaceholder: '06 12 34 56 78',
+    submitting: 'Envoi en cours...',
+    submit: 'Envoyer ma r\u00e9ponse',
+    successTitle: 'R\u00e9ponse envoy\u00e9e',
+    successText: 'Merci ! Ta r\u00e9ponse a bien \u00e9t\u00e9 enregistr\u00e9e.',
+    carnetLink: 'Carnet de Voyage',
+    newResponse: 'Nouvelle r\u00e9ponse',
+    defaultError: 'Veuillez r\u00e9essayer.',
+  },
+  en: {
+    title: 'Ravigny 2027',
+    dates: 'June 27 - 28, 2026',
+    about: 'A weekend with friends in the heart of the Norman countryside. Music, feasting, bonfires and wonderful encounters \u2014 the Charivari de Ravigny is back for a new edition.',
+    prose1: 'I, the undersigned,',
+    prose2: 'wish to confirm',
+    prose3: 'at the Charivari de Ravigny 2026. You can reach me at',
+    presenceOption: 'my attendance',
+    absenceOption: 'my absence',
+    presenceValue: 'pr\u00e9sent(e)',
+    absenceValue: 'absent(e)',
+    firstNamePlaceholder: 'Sinbad',
+    lastNamePlaceholder: 'The Sailor',
+    phonePlaceholder: '06 12 34 56 78',
+    submitting: 'Sending...',
+    submit: 'Send my response',
+    successTitle: 'Response sent',
+    successText: 'Thank you! Your response has been recorded.',
+    carnetLink: 'Travel Book',
+    newResponse: 'New response',
+    defaultError: 'Please try again.',
+  },
+}
+
 function autoResize(el) {
   if (!el) return
   const span = document.createElement('span')
@@ -33,6 +80,8 @@ function autoResize(el) {
 
 function Home() {
   const navigate = useNavigate()
+  const [lang, setLang] = useState('fr')
+  const t = TRANSLATIONS[lang]
   const [formData, setFormData] = useState({
     first_name: '',
     last_name: '',
@@ -64,7 +113,7 @@ function Home() {
 
   useEffect(() => {
     resizeAll()
-  }, [formData, resizeAll])
+  }, [formData, lang, resizeAll])
 
   function formatPhone(value) {
     const digits = value.replace(/\D/g, '').slice(0, 10)
@@ -137,7 +186,7 @@ function Home() {
 
       setSubmitted(true)
     } catch (err) {
-      setError(err.message || 'Veuillez réessayer.')
+      setError(err.message || t.defaultError)
     } finally {
       setSubmitting(false)
     }
@@ -147,11 +196,20 @@ function Home() {
 
   return (
     <div className="home page-enter">
+      <button
+        type="button"
+        className="home__lang-btn"
+        onClick={() => setLang(l => l === 'fr' ? 'en' : 'fr')}
+        title={lang === 'fr' ? 'Switch to English' : 'Passer en français'}
+      >
+        {lang === 'fr' ? 'EN' : 'FR'}
+      </button>
+
       {/* Hero — full viewport */}
       <section className="home__hero">
         <div className="home__hero-content">
-          <h1 className="home__title">Ravigny 2027</h1>
-          <p className="home__dates">27 - 28 Juin 2026</p>
+          <h1 className="home__title">{t.title}</h1>
+          <p className="home__dates">{t.dates}</p>
         </div>
         <div className="home__scroll-hint" aria-hidden="true">
           <span />
@@ -161,9 +219,7 @@ function Home() {
       {/* About section */}
       <section className="home__about">
         <p className="home__about-text">
-          Un week-end entre amis au cœur de la campagne normande.
-          Musique, festin, grands feux et belles rencontres — le Charivari
-          de Ravigny revient pour une nouvelle édition.
+          {t.about}
         </p>
       </section>
 
@@ -173,16 +229,16 @@ function Home() {
           {submitted ? (
             <div className="home__success">
               <div className="home__success-icon"><IconCheckCircle size={32} /></div>
-              <h2 className="home__success-title">Réponse envoyée</h2>
+              <h2 className="home__success-title">{t.successTitle}</h2>
               <p className="home__success-text">
-                Merci ! Ta réponse a bien été enregistrée.
+                {t.successText}
               </p>
               <div className="home__success-actions">
                 <button className="home__nav-link" onClick={() => navigate('/carnet-de-voyage')}>
-                  Carnet de Voyage
+                  {t.carnetLink}
                 </button>
                 <button onClick={() => { setSubmitted(false); setFormData({ first_name: '', last_name: '', interest: 'présent(e)', countryCode: '+33', phone: '' }) }}>
-                  Nouvelle réponse
+                  {t.newResponse}
                 </button>
               </div>
             </div>
@@ -191,13 +247,13 @@ function Home() {
               <div className="home__prose-card card">
                 <form onSubmit={handleSubmit}>
                   <p className="home__prose">
-                    Je soussigné(e){' '}
+                    {t.prose1}{' '}
                     <input
                       ref={firstNameRef}
                       type="text"
                       name="first_name"
                       className="inline-field home__inline-input"
-                      placeholder="Simbad"
+                      placeholder={t.firstNamePlaceholder}
                       value={formData.first_name}
                       onChange={handleChange}
                       required
@@ -207,12 +263,12 @@ function Home() {
                       type="text"
                       name="last_name"
                       className="inline-field home__inline-input"
-                      placeholder="Le Marin"
+                      placeholder={t.lastNamePlaceholder}
                       value={formData.last_name}
                       onChange={handleChange}
                       required
                     />{' '}
-                    souhaite confirmer{' '}
+                    {t.prose2}{' '}
                     <span className="home__select-wrap">
                       <select
                         ref={interestRef}
@@ -221,12 +277,11 @@ function Home() {
                         value={formData.interest}
                         onChange={handleChange}
                       >
-                        <option value="présent(e)">ma présence</option>
-                        <option value="absent(e)">mon absence</option>
+                        <option value="présent(e)">{t.presenceOption}</option>
+                        <option value="absent(e)">{t.absenceOption}</option>
                       </select>
                     </span>{' '}
-                    au Charivari de Ravigny 2026.
-                    Vous pouvez me joindre au{' '}
+                    {t.prose3}{' '}
                     <span className="home__phone-group">
                       <select
                         ref={countryCodeRef}
@@ -244,7 +299,7 @@ function Home() {
                         type="tel"
                         name="phone"
                         className="inline-field home__inline-input"
-                        placeholder="06 12 34 56 78"
+                        placeholder={t.phonePlaceholder}
                         value={formData.phone}
                         onChange={handleChange}
                         required
@@ -253,7 +308,7 @@ function Home() {
                   </p>
 
                   <button type="submit" className="home__submit" disabled={submitting}>
-                    {submitting ? 'Envoi en cours...' : 'Envoyer ma réponse'}
+                    {submitting ? t.submitting : t.submit}
                   </button>
 
                   {error && (
@@ -265,7 +320,7 @@ function Home() {
               </div>
 
               <button className="home__nav-link" onClick={() => navigate('/carnet-de-voyage')}>
-                Carnet de Voyage
+                {t.carnetLink}
               </button>
             </>
           )}

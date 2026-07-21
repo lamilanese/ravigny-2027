@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase.js'
 import DateTimePicker from '../components/DateTimePicker.jsx'
-import { IconArrowLeft, IconCheck, IconTrain, IconCar, IconCarpool, IconTransport, IconSuitcase, IconEuro, IconCheckCircle } from '../components/Icons.jsx'
+import { IconArrowLeft, IconCheck, IconTrain, IconCar, IconCarpool, IconTransport, IconSuitcase, IconEuro, IconCheckCircle, IconUser } from '../components/Icons.jsx'
 import MapSvg from '../components/MapSvg.jsx'
 import './CarnetDeVoyage.css'
 
@@ -236,7 +236,7 @@ function CarnetDeVoyage() {
       // 1. Look up contact by phone number
       const { data: contactRow, error: contactErr } = await supabase
         .from('contact_info')
-        .select('contact_id, f_name, m_f, allergies, group_id')
+        .select('contact_id, f_name, m_f, allergies, group_id, lang')
         .eq('num', cleaned)
         .single()
 
@@ -260,6 +260,8 @@ function CarnetDeVoyage() {
 
       setContact(contactRow)
       setParticipation(partRow)
+      if (contactRow.lang) setLang(contactRow.lang)
+      localStorage.setItem('cdv_phone', cleaned)
 
       // 3. Fetch group members if contact has a group
       if (contactRow.group_id) {
@@ -311,13 +313,15 @@ function CarnetDeVoyage() {
     }
   }
 
-  // Auto-load when arriving from Home with a pre-validated phone number
+  // Auto-load from Home navigation state or localStorage
   const autoLoaded = useRef(false)
   const dataLoaded = useRef(false)
   useEffect(() => {
-    if (location.state?.num && !autoLoaded.current) {
+    if (autoLoaded.current) return
+    const num = location.state?.num || localStorage.getItem('cdv_phone')
+    if (num) {
       autoLoaded.current = true
-      checkPhone(location.state.num)
+      checkPhone(num)
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -470,6 +474,19 @@ function CarnetDeVoyage() {
     navigate('/')
   }
 
+  function handleChangeNumber() {
+    clearTimeout(autosaveTimer.current)
+    if (dataLoaded.current && contact) saveData()
+    localStorage.removeItem('cdv_phone')
+    setContact(null)
+    setParticipation(null)
+    setGroupMembers([])
+    setPhone('')
+    setError(null)
+    dataLoaded.current = false
+    autoLoaded.current = false
+  }
+
   const isDriver = formData.travel === 'car-driver'
   const isTrain = formData.travel === 'train'
   const isDunno = formData.travel === 'passenger'
@@ -506,11 +523,12 @@ function CarnetDeVoyage() {
               </button>
               <button
                 type="button"
-                className="cdv__header-btn cdv__lang-btn"
-                onClick={() => setLang(l => l === 'fr' ? 'en' : 'fr')}
-                title={lang === 'fr' ? 'Switch to English' : 'Passer en français'}
+                className="cdv__header-btn cdv__change-btn"
+                onClick={handleChangeNumber}
+                title={lang === 'fr' ? 'Changer de numéro' : 'Change number'}
               >
-                {lang === 'fr' ? 'EN' : 'FR'}
+                <span className="cdv__change-label">{participant.name}</span>
+                <IconUser size={14} className="cdv__change-icon" />
               </button>
             </div>
           </div>
@@ -520,16 +538,7 @@ function CarnetDeVoyage() {
               <IconArrowLeft size={14} /> <span className="cdv__back-label">{t.retour}</span>
             </button>
             <h1 className="cdv__title">{t.title}</h1>
-            <div className="cdv__header-actions">
-              <button
-                type="button"
-                className="cdv__header-btn cdv__lang-btn"
-                onClick={() => setLang(l => l === 'fr' ? 'en' : 'fr')}
-                title={lang === 'fr' ? 'Switch to English' : 'Passer en français'}
-              >
-                {lang === 'fr' ? 'EN' : 'FR'}
-              </button>
-            </div>
+            <div className="cdv__header-actions" />
           </div>
         )}
       </header>

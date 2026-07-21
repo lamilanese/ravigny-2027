@@ -103,14 +103,20 @@
   display: none;
 }
 
-/* Language toggle */
-.cdv__lang-btn {
-  width: 32px;
-  padding: 0;
-  font-weight: 600;
-  font-size: 11px;
-  letter-spacing: 0.5px;
-  flex-shrink: 0;
+/* Change number button */
+.cdv__change-btn {
+  padding: 0 12px;
+  font-size: 12px;
+  opacity: 0.5;
+  transition: opacity 0.2s, border-color 0.2s, background 0.2s;
+}
+
+.cdv__change-btn:hover {
+  opacity: 1;
+}
+
+.cdv__change-icon {
+  display: none;
 }
 
 .cdv__save-btn--idle {
@@ -1054,6 +1060,19 @@
   }
 
   .cdv__save-btn {
+    width: 32px;
+    padding: 0;
+  }
+
+  .cdv__change-label {
+    display: none;
+  }
+
+  .cdv__change-icon {
+    display: block;
+  }
+
+  .cdv__change-btn {
     width: 32px;
     padding: 0;
   }
