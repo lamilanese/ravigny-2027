@@ -307,11 +307,23 @@ function CarnetDeVoyage() {
             .in('contact_id', members.map(m => m.contact_id))
 
           const partMap = Object.fromEntries((participations || []).map(p => [p.contact_id, p]))
-          setGroupMembers(members.map(({ l_name, ...m }) => ({
+          const mapped = members.map(({ l_name, ...m }) => ({
             ...m,
             rsvp: partMap[m.contact_id]?.rsvp || null,
             payed: partMap[m.contact_id]?.payed,
-          })))
+          }))
+          // Sort: owner first, then by age descending (oldest first), then alphabetically
+          // Null birthdays are treated as adults (sort among the oldest)
+          mapped.sort((a, b) => {
+            if (a.contact_id === contactRow.contact_id) return -1
+            if (b.contact_id === contactRow.contact_id) return 1
+            // Use epoch 0 for null birthdays so they sort as very old (among adults)
+            const dateA = a.birthday ? new Date(a.birthday) : new Date(0)
+            const dateB = b.birthday ? new Date(b.birthday) : new Date(0)
+            if (dateA.getTime() !== dateB.getTime()) return dateA - dateB
+            return (a.f_name || '').localeCompare(b.f_name || '')
+          })
+          setGroupMembers(mapped)
         }
       }
 
