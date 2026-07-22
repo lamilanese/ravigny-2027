@@ -1,15 +1,15 @@
 import { useMemo } from 'react'
 
 const ARRIVAL_DAYS = [
-  { date: '2026-07-27', label: 'Lun', num: '27' },
-  { date: '2026-07-28', label: 'Mar', num: '28' },
-  { date: '2026-07-29', label: 'Mer', num: '29' },
+  { date: '2026-07-27', label: 'Mon', num: '27' },
+  { date: '2026-07-28', label: 'Tue', num: '28' },
+  { date: '2026-07-29', label: 'Wed', num: '29' },
 ]
 
 const DEPARTURE_DAYS = [
-  { date: '2026-07-29', label: 'Mer', num: '29' },
-  { date: '2026-07-30', label: 'Jeu', num: '30' },
-  { date: '2026-07-31', label: 'Ven', num: '31' },
+  { date: '2026-07-29', label: 'Wed', num: '29' },
+  { date: '2026-07-30', label: 'Thu', num: '30' },
+  { date: '2026-07-31', label: 'Fri', num: '31' },
 ]
 
 const TIMES = []

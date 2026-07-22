@@ -841,7 +841,7 @@ function CarnetDeVoyage() {
                       const dayName = new Date(day.date + 'T12:00:00').toLocaleDateString(lang === 'fr' ? 'fr-FR' : 'en-GB', { weekday: 'short', day: 'numeric' })
                       return (
                         <div key={day.date} className="cdv__weather-day">
-                          <span className="cdv__weather-date">{dayName}</span>
+                          <span className="cdv__weather-date">{dayName.toUpperCase()}</span>
                           <span className="cdv__weather-icon"><Icon size={32} /></span>
                           <span className="cdv__weather-temps">{Math.round(day.min)}° / {Math.round(day.max)}°</span>
                         </div>
