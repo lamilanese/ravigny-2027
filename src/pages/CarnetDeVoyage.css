@@ -757,7 +757,7 @@
   padding: 10px 0;
   margin-bottom: 12px;
   font-size: 15px;
-  color: var(--color-text-muted);
+  color: var(--color-accent);
 }
 
 .cdv__custom-checkbox {
@@ -774,12 +774,12 @@
 }
 
 .cdv__checkbox-label--checked .cdv__custom-checkbox {
-  background: rgba(120, 200, 240, 0.15);
-  border-color: var(--color-primary);
+  background: rgba(212, 168, 83, 0.15);
+  border-color: var(--color-accent);
 }
 
 .cdv__checkbox-label--checked .cdv__custom-checkbox .icon {
-  stroke: var(--color-primary);
+  stroke: var(--color-accent);
 }
 
 .cdv__checkbox-label input[type="checkbox"] {
@@ -992,6 +992,47 @@
   }
 }
 
+
+/* ======================== */
+/* Weather forecast         */
+/* ======================== */
+.cdv__weather {
+  display: flex;
+  gap: 8px;
+  margin: 16px 0;
+}
+
+.cdv__weather-day {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 8px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--color-border);
+}
+
+.cdv__weather-date {
+  font-size: 12px;
+  text-transform: capitalize;
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
+.cdv__weather-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-primary);
+}
+
+.cdv__weather-temps {
+  font-size: 13px;
+  color: var(--color-text);
+  font-weight: 500;
+}
 
 /* ======================== */
 /* Mobile layout            */

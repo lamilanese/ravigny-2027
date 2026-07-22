@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase.js'
 import DateTimePicker from '../components/DateTimePicker.jsx'
-import { IconArrowLeft, IconCheck, IconTrain, IconCar, IconCarpool, IconTransport, IconSuitcase, IconEuro, IconCheckCircle } from '../components/Icons.jsx'
+import { IconArrowLeft, IconCheck, IconTrain, IconCar, IconCarpool, IconTransport, IconSuitcase, IconEuro, IconCheckCircle, IconWeatherSun, IconWeatherCloudSun, IconWeatherCloud, IconWeatherFog, IconWeatherDrizzle, IconWeatherRain, IconWeatherSnow, IconWeatherLightning } from '../components/Icons.jsx'
 import MapSvg from '../components/MapSvg.jsx'
 import './CarnetDeVoyage.css'
 
@@ -11,13 +11,40 @@ const FULL_RATE = 45
 const REDUCED_RATE = 30
 const CHILD_FREE_AGE = 6
 const EVENT_DATE = new Date('2026-06-26')
+const EVENT_DAYS = ['2026-07-22', '2026-07-23', '2026-07-24']
+const EVENT_LAT = 48.38
+const EVENT_LON = -0.08
+
+const WMO_WEATHER = {
+  0: { fr: 'Ciel dégagé', en: 'Clear sky', Icon: IconWeatherSun },
+  1: { fr: 'Peu nuageux', en: 'Mostly clear', Icon: IconWeatherCloudSun },
+  2: { fr: 'Partiellement nuageux', en: 'Partly cloudy', Icon: IconWeatherCloudSun },
+  3: { fr: 'Couvert', en: 'Overcast', Icon: IconWeatherCloud },
+  45: { fr: 'Brouillard', en: 'Fog', Icon: IconWeatherFog },
+  48: { fr: 'Brouillard givrant', en: 'Rime fog', Icon: IconWeatherFog },
+  51: { fr: 'Bruine légère', en: 'Light drizzle', Icon: IconWeatherDrizzle },
+  53: { fr: 'Bruine', en: 'Drizzle', Icon: IconWeatherDrizzle },
+  55: { fr: 'Bruine dense', en: 'Dense drizzle', Icon: IconWeatherDrizzle },
+  61: { fr: 'Pluie légère', en: 'Light rain', Icon: IconWeatherRain },
+  63: { fr: 'Pluie', en: 'Rain', Icon: IconWeatherRain },
+  65: { fr: 'Pluie forte', en: 'Heavy rain', Icon: IconWeatherRain },
+  71: { fr: 'Neige légère', en: 'Light snow', Icon: IconWeatherSnow },
+  73: { fr: 'Neige', en: 'Snow', Icon: IconWeatherSnow },
+  75: { fr: 'Neige forte', en: 'Heavy snow', Icon: IconWeatherSnow },
+  80: { fr: 'Averses légères', en: 'Light showers', Icon: IconWeatherDrizzle },
+  81: { fr: 'Averses', en: 'Showers', Icon: IconWeatherRain },
+  82: { fr: 'Averses violentes', en: 'Violent showers', Icon: IconWeatherRain },
+  95: { fr: 'Orage', en: 'Thunderstorm', Icon: IconWeatherLightning },
+  96: { fr: 'Orage avec grêle', en: 'Thunderstorm with hail', Icon: IconWeatherLightning },
+  99: { fr: 'Orage violent', en: 'Severe thunderstorm', Icon: IconWeatherLightning },
+}
 
 const TRANSLATIONS = {
   fr: {
     retour: 'Retour',
     title: 'Carnet de Voyage',
     saving: 'Sauvegarde...',
-    save: 'Sauvegarder',
+    save: 'Sauvegardé',
     phoneLabel: 'Entre ton numéro de téléphone pour accéder à ton carnet',
     phonePlaceholder: '06 12 34 56 78',
     loading: 'Chargement...',
@@ -60,10 +87,10 @@ const TRANSLATIONS = {
     dietaryCheckbox: "J'ai des restrictions alimentaires",
     dietaryPlaceholder: 'Végétarien, sans gluten, allergie aux noix...',
     comments: 'Commentaires',
-    commentsPlaceholder: 'Toute information utile pour les organisateurs.',
+    commentsPlaceholder: 'Commentaires, désidératas, souhaits...',
     financialTitle: 'Participation financière',
     financialPaid: 'Participation financière bien reçue. Merci !',
-    financialIntro: "Nous vous proposons deux montants selon vos possibilités. Ce montant couvrira l'intégralité des repas et des boissons.",
+    financialIntro: "Nous vous proposons deux montants selon vos possibilités. Ce montant couvrira l'intégralité des repas et des boissons, ainsi qu'une partie des frais du covoiturage.",
     sendByWero: 'Envoyer par Wero',
     reducedRate: 'Tarif réduit',
     fullRate: 'Tarif plein',
@@ -72,13 +99,14 @@ const TRANSLATIONS = {
     saved: 'Sauvegardé !',
     copy: 'Copier',
     copied: 'Copié !',
-    essentialItems: ['Sac de couchage', 'Costume', 'Affaires chaudes', 'Maillot et serviette de bain', 'Affaires salissables'],
+    packingIntro: "Nous sommes ravies de vous accueillir dans ce lieu, où les conditions d'accueil sont néanmoins un peu spartiates : la maison n'est pas chauffée et il n'y a qu'une seule salle d'eau pour tous. Comme il vaut mieux prévenir que guérir, merci d'apporter le nécessaire pour votre confort !",
+    essentialItems: ['Sac de couchage', 'Costume',  'Maillot et serviette de bain', 'Affaires de sport/salissables'],
     optionalItems: ['Lampe torche', 'Appareil photo', 'Instrument de musique'],
     family: 'Famille',
     familyMembers: 'Participants',
     attending: 'Présent',
     notAttending: 'Absent',
-    transportShared: "Merci de signaler si l'un des participants ne fait pas le trajet avec le reste de la famille.",
+    transportShared: "Le mode de transport sélectionné s'appliquera automatiquement à toute la famille. Faites-nous signe si l'un d'entre vous souhaite voyager séparément.",
     yearsOld: 'ans',
     free: 'gratuit',
     totalAmount: 'Montant suggéré',
@@ -87,7 +115,7 @@ const TRANSLATIONS = {
     retour: 'Back',
     title: 'Travel Book',
     saving: 'Saving...',
-    save: 'Save',
+    save: 'Saved',
     phoneLabel: 'Enter your phone number to access your travel book',
     phonePlaceholder: '06 12 34 56 78',
     loading: 'Loading...',
@@ -130,10 +158,10 @@ const TRANSLATIONS = {
     dietaryCheckbox: 'I have dietary restrictions',
     dietaryPlaceholder: 'Vegetarian, gluten-free, nut allergy...',
     comments: 'Comments',
-    commentsPlaceholder: 'Any useful information for the organizers.',
+    commentsPlaceholder: 'Comments, wishes, requests...',
     financialTitle: 'Financial contribution',
     financialPaid: 'Financial contribution received. Thank you!',
-    financialIntro: 'We offer two amounts depending on your means. This amount will cover all meals and drinks.',
+    financialIntro: 'We offer two amounts depending on your means. This amount will cover all meals and drinks, as well as some of the carpooling expenses.',
     sendByWero: 'Send via Wero',
     reducedRate: 'Reduced rate',
     fullRate: 'Full rate',
@@ -142,16 +170,17 @@ const TRANSLATIONS = {
     saved: 'Saved!',
     copy: 'Copy',
     copied: 'Copied!',
-    essentialItems: ['Sleeping bag', 'Costume/Suit', 'Warm clothes', 'Swimsuit and towel', 'Clothes that can get dirty'],
+    packingIntro: 'We are delighted to welcome you to our lovely, albeit rustic, home. The house is not heated and there is only one bathroom for everyone, please make sure you bring what you need to be comfortable!',
+    essentialItems: ['Sleeping bag', 'Costume', 'Swimsuit and towel', 'Sportswear that can get dirty'],
     optionalItems: ['Flashlight', 'Camera', 'Musical instrument'],
     family: 'Family',
     familyMembers: 'Participants',
     attending: 'Attending',
     notAttending: 'Not attending',
-    transportShared: 'Please let us know if one of the participants is not travelling with the rest of the family.',
+    transportShared: 'The selected mode of transport is automatically applied to all members of your family. Please let us know if one member wishes to travel independently.',
     yearsOld: 'y/o',
     free: 'free',
-    totalAmount: 'Suggested amount',
+    totalAmount: 'Recommended amount',
   },
 }
 
@@ -169,6 +198,7 @@ function CarnetDeVoyage() {
   const [hasAllergies, setHasAllergies] = useState(false)
 
   const [groupMembers, setGroupMembers] = useState([]) // [{ contact_id, f_name, l_name, birthday, allergies, rsvp }]
+  const [weather, setWeather] = useState(null) // [{ date, code, min, max }] or null
 
   const [arrivalPlaceExplicit, setArrivalPlaceExplicit] = useState(false)
   const [customAmount, setCustomAmount] = useState('')
@@ -335,6 +365,27 @@ function CarnetDeVoyage() {
     }, 2000)
     return () => clearTimeout(autosaveTimer.current)
   }, [formData, hasAllergies, groupMembers]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Fetch weather forecast for event days (only available ~16 days ahead)
+  useEffect(() => {
+    const start = EVENT_DAYS[0]
+    const end = EVENT_DAYS[EVENT_DAYS.length - 1]
+    fetch(
+      `https://api.open-meteo.com/v1/forecast?latitude=${EVENT_LAT}&longitude=${EVENT_LON}&daily=temperature_2m_max,temperature_2m_min,weathercode&timezone=Europe/Paris&start_date=${start}&end_date=${end}`
+    )
+      .then(r => r.json())
+      .then(data => {
+        if (!data.daily?.time) return
+        const days = data.daily.time.map((date, i) => ({
+          date,
+          code: data.daily.weathercode[i],
+          min: data.daily.temperature_2m_min[i],
+          max: data.daily.temperature_2m_max[i],
+        }))
+        setWeather(days)
+      })
+      .catch(() => {})
+  }, [])
 
   function handleFormChange(e) {
     const { name, value, type, checked } = e.target
@@ -597,10 +648,6 @@ function CarnetDeVoyage() {
                 <div className="cdv__widget-icon"><IconTransport size={18} /></div>
                 <h2 className="cdv__widget-title">{t.transports}</h2>
               </div>
-              {hasGroup && (
-                <p className="cdv__group-note">{t.transportShared}</p>
-              )}
-
               <div className="cdv__trip-card">
                 <p className="cdv__intro-text">
                   {t.address} : <a href="https://maps.app.goo.gl/bTb3fVHTLFH2Dcjp8">81 Impasse de la Fontaine, 53 370 Ravigny</a><br />
@@ -612,6 +659,9 @@ function CarnetDeVoyage() {
               {/* Trajet aller */}
               <div className="cdv__trip-card">
                 <div className="cdv__section-label">{t.outbound}</div>
+                {hasGroup && (
+                  <p className="cdv__group-note">{t.transportShared}</p>
+                )}
 
                 <div className="cdv__transport-cards">
                   {[
@@ -768,6 +818,25 @@ function CarnetDeVoyage() {
 
               <div className="cdv__trip-card">
                 <div className="cdv__trip-label">{t.itemsToPack}</div>
+
+                <p className="cdv__intro-text">{t.packingIntro}</p>
+
+                {weather && (
+                  <div className="cdv__weather">
+                    {weather.map(day => {
+                      const w = WMO_WEATHER[day.code] || WMO_WEATHER[0]
+                      const { Icon } = w
+                      const dayName = new Date(day.date + 'T12:00:00').toLocaleDateString(lang === 'fr' ? 'fr-FR' : 'en-GB', { weekday: 'short', day: 'numeric' })
+                      return (
+                        <div key={day.date} className="cdv__weather-day">
+                          <span className="cdv__weather-date">{dayName}</span>
+                          <span className="cdv__weather-icon"><Icon size={32} /></span>
+                          <span className="cdv__weather-temps">{Math.round(day.min)}° / {Math.round(day.max)}°</span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
 
                 <div className="cdv__section-label">{t.essentials}</div>
                 <div className="cdv__tags">
