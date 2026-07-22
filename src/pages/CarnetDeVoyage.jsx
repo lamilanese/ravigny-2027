@@ -10,8 +10,8 @@ const EVENT_ID = 'r27'
 const FULL_RATE = 45
 const REDUCED_RATE = 30
 const CHILD_FREE_AGE = 6
-const EVENT_DATE = new Date('2026-06-26')
-const EVENT_DAYS = ['2026-07-22', '2026-07-23', '2026-07-24']
+const EVENT_DATE = new Date('2026-07-28')
+const EVENT_DAYS = ['2026-07-28', '2026-07-29', '2026-07-30']
 const EVENT_LAT = 48.38
 const EVENT_LON = -0.08
 
@@ -58,7 +58,7 @@ const TRANSLATIONS = {
     greetingM: 'Cher',
     introText: 'Entre pierres et forêts, nous vous avons préparé un refuge de lumière, une parenthèse suspendue, pour célébrer vos histoires, vos noms, et tout ce qui vous relie à travers les siècles.',
     date: 'Date',
-    dateValue: 'du vendredi 26 juin à partir de 19 heures au dimanche 28 juin à 19 heures',
+    dateValue: 'du mardi 28 juillet à partir de 19 heures au jeudi 30 juillet à 19 heures',
     location: 'Lieu',
     whatsapp: 'Rejoindre le groupe WhatsApp',
     transports: 'Transports',
@@ -129,7 +129,7 @@ const TRANSLATIONS = {
     greetingM: 'Dear',
     introText: 'Between stones and forests, we have prepared a refuge of light for you, a suspended parenthesis, to celebrate your stories, your names, and everything that connects you across the centuries.',
     date: 'Date',
-    dateValue: 'from Friday June 26 at 7 PM to Sunday June 28 at 7 PM',
+    dateValue: 'from Tuesday July 28 at 7 PM to Thursday July 30 at 7 PM',
     location: 'Location',
     whatsapp: 'Join the WhatsApp group',
     transports: 'Transport',

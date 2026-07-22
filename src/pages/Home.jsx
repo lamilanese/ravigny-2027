@@ -10,7 +10,7 @@ const EVENT_ID = 'r27'
 const TRANSLATIONS = {
   fr: {
     title: 'Ravigny 2027',
-    dates: '27 - 28 Juin 2026',
+    dates: '28 - 30 Juillet 2026',
     about: 'Un week-end entre amis au c\u0153ur de la campagne normande. Musique, festin, grands feux et belles rencontres \u2014 le Charivari de Ravigny revient pour une nouvelle \u00e9dition.',
     prose1: 'Je soussign\u00e9(e)',
     prose2: 'souhaite confirmer',
@@ -32,7 +32,7 @@ const TRANSLATIONS = {
   },
   en: {
     title: 'Ravigny 2027',
-    dates: 'June 27 - 28, 2026',
+    dates: 'July 28 - 30, 2026',
     about: 'A weekend with friends in the heart of the Norman countryside. Music, feasting, bonfires and wonderful encounters \u2014 the Charivari de Ravigny is back for a new edition.',
     prose1: 'I, the undersigned,',
     prose2: 'wish to confirm',
