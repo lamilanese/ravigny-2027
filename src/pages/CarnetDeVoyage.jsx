@@ -197,7 +197,7 @@ function CarnetDeVoyage() {
   const [participation, setParticipation] = useState(null) // event_participants row or null (new)
   const [hasAllergies, setHasAllergies] = useState(false)
 
-  const [groupMembers, setGroupMembers] = useState([]) // [{ contact_id, f_name, l_name, birthday, allergies, rsvp }]
+  const [groupMembers, setGroupMembers] = useState([]) // [{ contact_id, f_name, birthday, allergies, rsvp }]
   const [weather, setWeather] = useState(null) // [{ date, code, min, max }] or null
 
   const [arrivalPlaceExplicit, setArrivalPlaceExplicit] = useState(false)
@@ -307,7 +307,7 @@ function CarnetDeVoyage() {
             .in('contact_id', members.map(m => m.contact_id))
 
           const partMap = Object.fromEntries((participations || []).map(p => [p.contact_id, p]))
-          setGroupMembers(members.map(m => ({
+          setGroupMembers(members.map(({ l_name, ...m }) => ({
             ...m,
             rsvp: partMap[m.contact_id]?.rsvp || null,
             payed: partMap[m.contact_id]?.payed,
@@ -791,7 +791,7 @@ function CarnetDeVoyage() {
                               {attending ? <IconCheck size={12} /> : '\u00D7'}
                             </button>
                             <span className="cdv__family-name">
-                              {m.f_name} {m.l_name}
+                              {m.f_name}
                               {isMinor && <span className="cdv__family-age"> ({age} {t.yearsOld})</span>}
                             </span>
                           </div>
